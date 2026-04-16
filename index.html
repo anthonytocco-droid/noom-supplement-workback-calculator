@@ -228,6 +228,7 @@
       </div>
     </div>
   </div>
+  <div id="activeLaunches"></div>
   <div id="singleResult"></div>
   <div id="portfolioResults"></div>
 </div>
@@ -926,6 +927,33 @@ function buildLegend(r) {
   items.push(['3PL Transit','#64748b'],['Launch ◆','#e74c3c']);
   return `<div class="gantt-legend">${items.map(([l,c])=>`<div class="leg-item"><div class="leg-sw" style="background:${c}"></div>${l}</div>`).join('')}</div>`;
 }
+
+// ══════════════════════════════════════════
+//  Active launch status dashboard
+// ══════════════════════════════════════════
+function renderActiveLaunches() {
+  const el = document.getElementById('activeLaunches');
+  const skuNames = Object.keys(SKU_LAUNCH_DATES);
+  if (!skuNames.length) { el.innerHTML = ''; return; }
+
+  const cards = skuNames.map(name => {
+    const launchVal    = SKU_LAUNCH_DATES[name];
+    const compsPreset  = (SKU_COMPONENTS[name] || []).map(c => ({ confirmedEta: null, artworkDoneDate: null, ...c }));
+    const r            = workback(launchVal, compsPreset, { enabled: true, mfgWeeks: 7, externalPreBottle: false, externalInBottle: false });
+    const [stLabel, stCls] = statusPill(r.daysToLaunch);
+    return `<div class="card">
+      <div class="card-head"><span>${name}</span><span class="pill ${stCls}">${stLabel} · Launch ${fmt(r.launch,true)}</span></div>
+      ${buildSnapshot(name, r)}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `<div style="margin-top:0;margin-bottom:0;">
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin:24px 0 12px 2px;">Active Launch Status</div>
+    ${cards}
+  </div>`;
+}
+
+renderActiveLaunches();
 </script>
 </body>
 </html>
