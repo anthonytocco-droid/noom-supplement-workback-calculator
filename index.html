@@ -791,13 +791,22 @@ function buildGantt(skuList) {
 
   // Header
   o += `<rect x="0" y="0" width="${SVG_W}" height="${HDR_H}" fill="#1a1a2e"/>`;
-  o += `<text x="8" y="24" font-size="11" fill="#aab" font-weight="700">SKU</text>`;
-  const legHdr = [['Artwork','#bfdbfe'],['Packaging','#3b82f6'],['Supplement Mfg + Testing','#0891b2'],['3PL Transit','#94a3b8']];
-  let lx = LABEL_W + 10;
-  legHdr.forEach(([lbl,col]) => {
-    o += `<rect x="${lx}" y="14" width="11" height="9" rx="2" fill="${col}"/>`;
-    o += `<text x="${lx+14}" y="23" font-size="9" fill="#dde">${lbl}</text>`;
-    lx += lbl.length * 5.5 + 22;
+  const skuHeaderName = skuList.length === 1 ? skuList[0].name : 'SKU';
+  o += `<text x="8" y="24" font-size="11" fill="#aab" font-weight="700">${skuHeaderName}</text>`;
+  // Center legend block across the chart area
+  const legHdr = [
+    ['Artwork','#bfdbfe',42],
+    ['Packaging','#3b82f6',52],
+    ['Supplement Mfg + Testing','#0891b2',134],
+    ['3PL Transit','#94a3b8',60],
+  ];
+  const swW = 11, swGap = 5, itemGap = 24;
+  const totalLegW = legHdr.reduce((s,[,,tw]) => s + swW + swGap + tw, 0) + itemGap * (legHdr.length - 1);
+  let lx = LABEL_W + (CHART_W - totalLegW) / 2;
+  legHdr.forEach(([lbl,col,tw]) => {
+    o += `<rect x="${lx}" y="14" width="${swW}" height="9" rx="2" fill="${col}"/>`;
+    o += `<text x="${lx+swW+swGap}" y="23" font-size="9" fill="#dde">${lbl}</text>`;
+    lx += swW + swGap + tw + itemGap;
   });
 
   // SKU rows
