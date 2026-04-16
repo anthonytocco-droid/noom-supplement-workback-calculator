@@ -177,23 +177,11 @@
       <div class="comp-builder">
         <div class="comp-builder-title">Packaging Components</div>
         <div class="preset-btns">
-          <button class="preset-btn" onclick="addPreset('single','Gusset Bag',5,'Stephen Gould','vitaquest')">+ Gusset Bag · SG (5 wks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Shrink Wrap',4,'Stephen Gould','3pl')">+ Shrink Wrap · SG (4 wks → 3PL)</button>
-          <button class="preset-btn" onclick="addPreset('single','Corrugate Outer Shipper',4,'','3pl')" style="border-color:#d97706;color:#92400e;">+ Corrugate (4 wks → 3PL)</button>
-          <button class="preset-btn" onclick="addPreset('single','Marketing Postcard',2,'','3pl')" style="border-color:#7c3aed;color:#5b21b6;">+ Postcard (2 wks → 3PL)</button>
-          <button class="preset-btn" onclick="addPreset('single','Marketing Booklet',4,'','3pl')" style="border-color:#7c3aed;color:#5b21b6;">+ Booklet (4 wks → 3PL)</button>
-        </div>
-        <div class="custom-comp-row">
-          <div class="field"><label>Component</label><input type="text" id="customName" placeholder="e.g. Outer Box" /></div>
-          <div class="field"><label>Vendor</label><input type="text" id="customVendor" placeholder="e.g. Stephen Gould" /></div>
-          <div class="field"><label>Delivers To</label>
-            <select id="customDeliverTo" style="min-width:0;">
-              <option value="vitaquest">Vitaquest</option>
-              <option value="3pl">3PL (The Pharmacy Hub)</option>
-            </select>
-          </div>
-          <div class="field"><label>Wks</label><input type="number" id="customWks" class="wks" placeholder="6" min="1" max="52" /></div>
-          <button class="btn btn-ghost" style="padding:9px 14px;" onclick="addCustom('single')">+ Add</button>
+          <button class="preset-btn" onclick="addPreset('single','Gusset Bag',5,'Stephen Gould','vitaquest')">+ Gusset Bag (5 wks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Shrink Wrap Jar',4,'Stephen Gould','3pl')">+ Shrink Wrap Jar (4 wks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Corrugate Outer Shipper',4,'','3pl')" style="border-color:#d97706;color:#92400e;">+ Corrugate (4 wks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Marketing Postcard',2,'','3pl')" style="border-color:#7c3aed;color:#5b21b6;">+ Postcard (2 wks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Marketing Booklet',4,'','3pl')" style="border-color:#7c3aed;color:#5b21b6;">+ Booklet (4 wks)</button>
         </div>
         <div style="font-size:11px;color:#999;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;">Selected Components</div>
         <div class="selected-comps" id="singleComps"></div>
@@ -214,104 +202,36 @@
           </div>
           <div class="test-grid">
             <div class="test-section">
-              <div class="test-title">Pre-Bottling Testing (after mfg, before fill/seal)</div>
+              <div class="test-title">Pre-Bottling 3rd Party Testing</div>
               <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 wk</div>
               <div class="test-row opt"><label><input type="checkbox" id="extPreBottle" /><span class="opt-badge">Optional</span> External lab — +2 wks</label></div>
             </div>
             <div class="test-section">
-              <div class="test-title">In-Bottle Testing (after fill/seal, before ship)</div>
+              <div class="test-title">In-Bottle 3rd Party Testing</div>
               <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 wk</div>
               <div class="test-row opt"><label><input type="checkbox" id="extInBottle" /><span class="opt-badge">Optional</span> External lab — +2 wks</label></div>
             </div>
           </div>
-          <div class="mfg-note">Supplement mfg starts on same date as packaging production (concurrent). Gusset bags must arrive before fill/seal begins.</div>
         </div>
       </div>
-      <button class="btn btn-primary" onclick="calculateSingle()">Calculate</button>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+        <button class="btn btn-primary" onclick="calculateSingle()">Calculate</button>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#555;font-weight:600;">
+          <input type="checkbox" id="multiSkuMode" onchange="toggleMultiSku()" style="width:15px;height:15px;cursor:pointer;accent-color:#1a1a2e;" />
+          Add multiple SKUs
+        </label>
+      </div>
+      <div id="portfolioPanel" style="display:none;margin-top:14px;border-top:1px solid #eee;padding-top:14px;">
+        <div id="portfolioList" style="margin-bottom:10px;min-height:28px;font-size:12px;color:#bbb;">No SKUs added yet</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-green" onclick="addToPortfolio()">+ Add SKU to List</button>
+          <button class="btn btn-primary" onclick="renderPortfolio()">Calculate All</button>
+          <button class="btn btn-ghost" onclick="clearPortfolio()">Clear List</button>
+        </div>
+      </div>
     </div>
   </div>
   <div id="singleResult"></div>
-
-  <!-- Portfolio -->
-  <div class="card">
-    <div class="card-head">Portfolio Tracker — Add Multiple SKUs</div>
-    <div class="card-body">
-      <div class="input-row">
-        <div class="field"><label>SKU Name</label>
-          <select id="addSkuName" onchange="prefillLaunchDate(this,'addLaunchDate')">
-            <option value="">— Select SKU —</option>
-            <option>Metabolic</option>
-            <option>Vitality</option>
-            <option>Skin Essentials</option>
-            <option>Sleep Well</option>
-            <option>Fisetin + Quercetin</option>
-            <option>GlyNac</option>
-            <option>Spermadine + NR</option>
-            <option>Collagen</option>
-            <option>Creatine</option>
-          </select>
-        </div>
-        <div class="field"><label>Launch Date</label><input type="date" id="addLaunchDate" /></div>
-      </div>
-      <!-- Packaging -->
-      <div class="comp-builder">
-        <div class="comp-builder-title">Packaging Components for this SKU</div>
-        <div class="preset-btns">
-          <button class="preset-btn" onclick="addPreset('port','Gusset Bag',5,'Stephen Gould','vitaquest')">+ Gusset Bag · SG (5 wks)</button>
-          <button class="preset-btn" onclick="addPreset('port','Shrink Wrap',4,'Stephen Gould','3pl')">+ Shrink Wrap · SG (4 wks → 3PL)</button>
-          <button class="preset-btn" onclick="addPreset('port','Corrugate Outer Shipper',4,'','3pl')" style="border-color:#d97706;color:#92400e;">+ Corrugate (4 wks → 3PL)</button>
-          <button class="preset-btn" onclick="addPreset('port','Marketing Postcard',2,'','vitaquest')" style="border-color:#7c3aed;color:#5b21b6;">+ Postcard (2 wks → 3PL)</button>
-          <button class="preset-btn" onclick="addPreset('port','Marketing Booklet',4,'','vitaquest')" style="border-color:#7c3aed;color:#5b21b6;">+ Booklet (4 wks → 3PL)</button>
-        </div>
-        <div class="custom-comp-row">
-          <div class="field"><label>Component</label><input type="text" id="portCustomName" placeholder="e.g. Outer Box" /></div>
-          <div class="field"><label>Vendor</label><input type="text" id="portCustomVendor" placeholder="e.g. Stephen Gould" /></div>
-          <div class="field"><label>Delivers To</label>
-            <select id="portCustomDeliverTo" style="min-width:0;">
-              <option value="vitaquest">Vitaquest</option>
-              <option value="3pl">3PL (The Pharmacy Hub)</option>
-            </select>
-          </div>
-          <div class="field"><label>Wks</label><input type="number" id="portCustomWks" class="wks" placeholder="6" min="1" max="52" /></div>
-          <button class="btn btn-ghost" style="padding:9px 14px;" onclick="addCustom('port')">+ Add</button>
-        </div>
-        <div style="font-size:11px;color:#999;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;">Selected Components</div>
-        <div class="selected-comps" id="portComps"></div>
-      </div>
-      <!-- Manufacturing -->
-      <div class="mfg-builder">
-        <label class="mfg-toggle">
-          <input type="checkbox" id="portMfgEnabled" onchange="toggleMfg('port')" checked />
-          Vitaquest Supplement Manufacturing
-        </label>
-        <div class="mfg-options" id="portMfgOptions">
-          <div class="mfg-row">
-            <div class="field">
-              <label>Mfg Lead Time (wks)</label>
-              <input type="number" id="portMfgWeeks" value="7" min="1" max="52" style="min-width:0;width:80px;" />
-            </div>
-            <div style="font-size:12px;color:#059669;align-self:flex-end;padding-bottom:10px;">Range: 6–8 wks · Concurrent with packaging</div>
-          </div>
-          <div class="test-grid">
-            <div class="test-section">
-              <div class="test-title">Pre-Bottling Testing</div>
-              <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 wk</div>
-              <div class="test-row opt"><label><input type="checkbox" id="portExtPreBottle" /><span class="opt-badge">Optional</span> External lab — +2 wks</label></div>
-            </div>
-            <div class="test-section">
-              <div class="test-title">In-Bottle Testing</div>
-              <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 wk</div>
-              <div class="test-row opt"><label><input type="checkbox" id="portExtInBottle" /><span class="opt-badge">Optional</span> External lab — +2 wks</label></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;">
-        <button class="btn btn-green" onclick="addToPortfolio()">+ Add SKU to Portfolio</button>
-        <button class="btn btn-ghost" onclick="clearPortfolio()">Clear Portfolio</button>
-      </div>
-    </div>
-  </div>
   <div id="portfolioResults"></div>
 </div>
 
@@ -346,12 +266,30 @@ function toggleMfg(panel) {
 //  SKU launch date presets
 // ══════════════════════════════════════════
 const SKU_LAUNCH_DATES = {
-  'Metabolic':            '2026-06-01',
-  'Vitality':             '2026-07-01',
+  'Metabolic': '2026-06-01',
+  'Vitality':  '2026-07-01',
+};
+const SKU_COMPONENTS = {
+  'Metabolic': [
+    { name:'Gusset Bag',            weeks:5, vendor:'Stephen Gould', deliverTo:'vitaquest' },
+    { name:'Shrink Wrap Jar',       weeks:4, vendor:'Stephen Gould', deliverTo:'3pl' },
+    { name:'Corrugate Outer Shipper',weeks:4, vendor:'',             deliverTo:'3pl' },
+  ],
+  'Vitality': [
+    { name:'Gusset Bag',            weeks:5, vendor:'Stephen Gould', deliverTo:'vitaquest' },
+    { name:'Shrink Wrap Jar',       weeks:4, vendor:'Stephen Gould', deliverTo:'3pl' },
+    { name:'Corrugate Outer Shipper',weeks:4, vendor:'',             deliverTo:'3pl' },
+  ],
 };
 function prefillLaunchDate(sel, targetId) {
-  const date = SKU_LAUNCH_DATES[sel.value];
+  const sku = sel.value;
+  const date = SKU_LAUNCH_DATES[sku];
   if (date) document.getElementById(targetId).value = date;
+  const preset = SKU_COMPONENTS[sku];
+  if (preset) {
+    comps.single = preset.map(c => ({ ...c, confirmedEta: null, artworkDoneDate: null }));
+    renderChips('single');
+  }
 }
 
 // ══════════════════════════════════════════
@@ -694,7 +632,7 @@ function calculateSingle() {
           }
           <div class="ms"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div><div class="ms-note">${prodNote}</div></div>
           <div class="ms ${msClass(c.daysUntilArrives)}"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div><div class="ms-note">${arriveNote}</div></div>
-          ${c.confirmedEta ? `<div class="ms ${c.etaDelta > 0 ? 'red' : 'green'}"><div class="ms-label">Vendor ETA 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div><div class="ms-note">${c.etaDelta > 0 ? '⚠ '+c.etaDelta+'d late vs. need-by' : c.etaDelta < 0 ? '✓ '+Math.abs(c.etaDelta)+'d early' : '✓ On schedule'}</div></div>` : ''}
+          ${c.confirmedEta ? (()=>{ const d=Math.round((c.confirmedEta-c.arrives)/86400000); return `<div class="ms ${d>0?'red':'green'}"><div class="ms-label">Vendor ETA 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div><div class="ms-note">${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}</div></div>`; })() : ''}
         </div>
       </div>`;
   }).join('');
@@ -726,8 +664,6 @@ function calculateSingle() {
   const combinedSection = '';
 
   const ganttSVG = buildGantt([{name, r}]);
-  const critName = r.critical ? r.critical.name : '—';
-  const critDate = r.critical ? fmt(r.critical.printReady,true) : '—';
 
   document.getElementById('singleResult').innerHTML = `
     ${alertHTML}
@@ -735,10 +671,6 @@ function calculateSingle() {
       <div class="card-head"><span>${name}</span><span class="pill ${stCls}">${stLabel} · Launch ${fmt(r.launch,true)}</span></div>
       ${buildSnapshot(name, r)}
       ${compSections}${mfgSection}${combinedSection}
-      <div class="parallel-note">
-        <strong>Packaging critical path:</strong> ${critName} — artwork due ${critDate}.
-        ${r.mfgTrack ? `<strong>Mfg track:</strong> supplement mfg starts ${fmt(r.mfgTrack.suppMfgStart)} (concurrent), fill/seal ${fmt(r.mfgTrack.fillSealStart)}.` : ''}
-      </div>
       <div class="gantt-title">Gantt Chart</div>
       <div class="gantt-subtitle">Light blue = Artwork. Blue = Packaging. Teal = Supplement Mfg + Testing. Gray = 3PL Transit. ◆ = Launch.</div>
       <div class="gantt-wrap">${ganttSVG}</div>
@@ -751,20 +683,29 @@ function calculateSingle() {
 // ══════════════════════════════════════════
 let portfolio = [];
 
-function addToPortfolio() {
-  const name     = document.getElementById('addSkuName').value.trim();
-  const launchVal= document.getElementById('addLaunchDate').value;
-  if (!name)     { alert('Enter a SKU name.'); return; }
-  if (!launchVal){ alert('Select a launch date.'); return; }
-  if (!comps.port.length) { alert('Add at least one packaging component.'); return; }
-  portfolio.push({ name, launchVal, components:[...comps.port], mfg: getMfgOpts('port') });
-  comps.port = [];
-  renderChips('port');
-  renderPortfolio();
-  document.getElementById('addSkuName').value = '';
-  document.getElementById('addLaunchDate').value = '';
+function toggleMultiSku() {
+  const on = document.getElementById('multiSkuMode').checked;
+  document.getElementById('portfolioPanel').style.display = on ? 'block' : 'none';
 }
-function clearPortfolio() { portfolio = []; renderPortfolio(); }
+function addToPortfolio() {
+  const name     = document.getElementById('skuName').value.trim() || 'SKU';
+  const launchVal= document.getElementById('launchDate').value;
+  if (!launchVal){ alert('Select a launch date.'); return; }
+  if (!comps.single.length) { alert('Add at least one packaging component.'); return; }
+  portfolio.push({ name, launchVal, components:[...comps.single], mfg: getMfgOpts('single') });
+  comps.single = [];
+  renderChips('single');
+  renderPortfolioList();
+  document.getElementById('skuName').value = '';
+  document.getElementById('launchDate').value = '';
+}
+function removeFromPortfolio(i) { portfolio.splice(i,1); renderPortfolioList(); }
+function renderPortfolioList() {
+  const el = document.getElementById('portfolioList');
+  if (!portfolio.length) { el.innerHTML = '<span style="color:#bbb;">No SKUs added yet</span>'; return; }
+  el.innerHTML = portfolio.map((s,i) => `<span style="display:inline-flex;align-items:center;gap:5px;background:#f0f6ff;border:1px solid #c0d8f5;border-radius:20px;padding:4px 10px 4px 12px;font-size:13px;font-weight:600;color:#1a5fa8;margin:2px 4px 2px 0;">${s.name} <span style="font-size:11px;color:#888;font-weight:400;">${s.launchVal}</span><button onclick="removeFromPortfolio(${i})" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:15px;line-height:1;padding:0 2px;">×</button></span>`).join('');
+}
+function clearPortfolio() { portfolio = []; renderPortfolioList(); renderPortfolio(); }
 
 function renderPortfolio() {
   if (!portfolio.length) { document.getElementById('portfolioResults').innerHTML=''; return; }
@@ -912,8 +853,6 @@ function buildGantt(skuList) {
       if (is3pl) {
         const ax = xOf(comp.arrives);
         o += `<rect x="${ax-4}" y="${barY}" width="8" height="${BAR_H}" rx="1" fill="#b45309"/>`;
-      } else if (comp===r.critical) {
-        o += `<line x1="${pX}" y1="${curY+SKU_HDR_H}" x2="${pX}" y2="${curY+rh}" stroke="${GANTT_C.launch}" stroke-width="1" stroke-dasharray="3,3" opacity="0.35"/>`;
       }
     });
 
