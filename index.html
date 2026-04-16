@@ -153,7 +153,7 @@
         <div class="preset-btns">
           <button class="preset-btn" onclick="addPreset('single','Gusset Bag',5,'Stephen Gould','vitaquest')">+ Gusset Bag (5 weeks)</button>
           <button class="preset-btn" onclick="addPreset('single','Shrink Wrap Jar',4,'Stephen Gould','3pl')">+ Shrink Wrap Jar (4 weeks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Corrugate Outer Shipper',4,'','3pl')">+ Outer Shipper (4 weeks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Outer Shipper',4,'','3pl')">+ Outer Shipper (4 weeks)</button>
           <button class="preset-btn" onclick="addPreset('single','Marketing Postcard',2,'','3pl')">+ Postcard (2 weeks)</button>
           <button class="preset-btn" onclick="addPreset('single','Marketing Booklet',4,'','3pl')">+ Booklet (4 weeks)</button>
         </div>
@@ -241,12 +241,12 @@ const SKU_COMPONENTS = {
   'Metabolic': [
     { name:'Gusset Bag',            weeks:5, vendor:'Stephen Gould', deliverTo:'vitaquest', artworkDoneDate:'2026-03-31' },
     { name:'Shrink Wrap Jar',       weeks:4, vendor:'Stephen Gould', deliverTo:'3pl' },
-    { name:'Corrugate Outer Shipper',weeks:4, vendor:'',             deliverTo:'3pl' },
+    { name:'Outer Shipper',           weeks:4, vendor:'',             deliverTo:'3pl' },
   ],
   'Vitality': [
     { name:'Gusset Bag',            weeks:5, vendor:'Stephen Gould', deliverTo:'vitaquest' },
     { name:'Shrink Wrap Jar',       weeks:4, vendor:'Stephen Gould', deliverTo:'3pl' },
-    { name:'Corrugate Outer Shipper',weeks:4, vendor:'',             deliverTo:'3pl' },
+    { name:'Outer Shipper',           weeks:4, vendor:'',             deliverTo:'3pl' },
   ],
 };
 function prefillLaunchDate(sel, targetId) {
@@ -592,12 +592,13 @@ function calculateSingle() {
         </div>
         <div class="ms-grid">
           ${c.artworkDoneDate
-            ? `<div class="ms green"><div class="ms-label">Artwork Completed ✓</div><div class="ms-date">${fmt(c.artworkDoneDate,true)}</div><div class="ms-note">Actual date · <span style="cursor:pointer;color:#aaa;text-decoration:underline;" onclick="markArtworkDone('single',${i},null);calculateSingle()">undo</span></div></div>`
+            ? `<div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 weeks before artwork due</div></div>
+          <div class="ms"><div class="ms-label">Artwork Sent ✓</div><div class="ms-date">${fmt(c.artworkDoneDate,true)}</div><div class="ms-note">Sent to ${vendorLabel||'vendor'} · <span style="cursor:pointer;color:#aaa;text-decoration:underline;" onclick="markArtworkDone('single',${i},null);calculateSingle()">undo</span></div></div>`
             : `<div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 weeks before artwork due</div></div>
           <div class="ms ${artCls}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div><div class="ms-note">Sent to ${vendorLabel||'vendor'}${c.daysUntilArtwork>=0?' — '+c.daysUntilArtwork+'d from today':' — OVERDUE'}<br/><input type="date" style="margin-top:5px;border:1px solid #e2e8f0;border-radius:3px;padding:2px 4px;font-size:10px;color:#444;background:#f8fafc;width:100%;" onchange="markArtworkDone('single',${i},this.value);calculateSingle()" title="Mark artwork as completed" /></div></div>`
           }
           <div class="ms"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div><div class="ms-note">${prodNote}</div></div>
-          <div class="ms ${msClass(c.daysUntilArrives)}"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div><div class="ms-note">${arriveNote}</div></div>
+          <div class="ms"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div><div class="ms-note">${arriveNote}</div></div>
           ${c.confirmedEta ? (()=>{ const d=Math.round((c.confirmedEta-c.arrives)/86400000); return `<div class="ms ${d>0?'red':'green'}"><div class="ms-label">Vendor ETA 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div><div class="ms-note">${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}</div></div>`; })() : ''}
         </div>
       </div>`;
@@ -619,10 +620,10 @@ function calculateSingle() {
         <div class="ms-grid">
           <div class="ms"><div class="ms-label">Mfg Start</div><div class="ms-date">${fmt(t.suppMfgStart,true)}</div><div class="ms-note">Same date as print-ready artwork — concurrent</div></div>
           <div class="ms"><div class="ms-label">Supplement Mfg Complete</div><div class="ms-date">${fmt(t.suppMfgComplete,true)}</div><div class="ms-note">Pre-bottling testing begins</div></div>
-          <div class="ms ${msClass(dPreBottle)}"><div class="ms-label">Pre-Bottling Test (${t.preBottleWks} wk${t.preBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.preBottleStart)} → ${fmt(t.preBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalPreBottle?' + external lab (2 weeks)':''}</div></div>
-          <div class="ms green"><div class="ms-label">Fill / Seal</div><div class="ms-date">${fmt(t.fillSealStart,true)}</div><div class="ms-note">Tested supplement + bags both required</div></div>
-          <div class="ms ${msClass(dInBottle)}"><div class="ms-label">In-Bottle Test (${t.inBottleWks} wk${t.inBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.inBottleStart)} → ${fmt(t.inBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalInBottle?' + external lab (2 weeks)':''}</div></div>
-          <div class="ms green"><div class="ms-label">Ships to 3PL</div><div class="ms-date">${fmt(r.shipTo3PL,true)}</div><div class="ms-note">After in-bottle testing complete</div></div>
+          <div class="ms"><div class="ms-label">Pre-Bottling Test (${t.preBottleWks} wk${t.preBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.preBottleStart)} → ${fmt(t.preBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalPreBottle?' + external lab (2 weeks)':''}</div></div>
+          <div class="ms"><div class="ms-label">Fill / Seal</div><div class="ms-date">${fmt(t.fillSealStart,true)}</div><div class="ms-note">Tested supplement + bags both required</div></div>
+          <div class="ms"><div class="ms-label">In-Bottle Test (${t.inBottleWks} wk${t.inBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.inBottleStart)} → ${fmt(t.inBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalInBottle?' + external lab (2 weeks)':''}</div></div>
+          <div class="ms"><div class="ms-label">Ships to 3PL</div><div class="ms-date">${fmt(r.shipTo3PL,true)}</div><div class="ms-note">After in-bottle testing complete</div></div>
         </div>
       </div>`;
   }
@@ -638,9 +639,7 @@ function calculateSingle() {
       ${buildSnapshot(name, r)}
       ${compSections}${mfgSection}${combinedSection}
       <div class="gantt-title">Gantt Chart</div>
-      <div class="gantt-subtitle">Light blue = Artwork. Blue = Packaging. Teal = Supplement Mfg + Testing. Gray = 3PL Transit. ◆ = Launch.</div>
       <div class="gantt-wrap">${ganttSVG}</div>
-      ${buildLegend(r)}
     </div>`;
 }
 
@@ -724,9 +723,7 @@ function renderPortfolio() {
         </tr></thead><tbody>${rows}</tbody></table>
       </div>
       <div class="gantt-title">Portfolio Gantt</div>
-      <div class="gantt-subtitle">Light blue = Artwork. Blue = Packaging. Teal = Supplement Mfg + Testing. Gray = 3PL Transit. ◆ = Launch.</div>
       <div class="gantt-wrap">${ganttSVG}</div>
-      ${buildLegend(skuList[0]?.r)}
     </div>`;
 }
 
@@ -770,15 +767,24 @@ function buildGantt(skuList) {
   let o = `<svg viewBox="0 0 ${SVG_W} ${SVG_H}" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">`;
   o += `<rect width="${SVG_W}" height="${SVG_H}" fill="#fff"/>`;
 
-  // Monthly grid
-  const mcur = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
-  while (mcur <= maxDate) {
-    const x = xOf(mcur);
+  // Weekly grid
+  const wStart = new Date(minDate); wStart.setDate(wStart.getDate() - ((wStart.getDay()+6)%7)); // align to Monday
+  const wcur = new Date(wStart);
+  let lastMonthLabel = -1;
+  while (wcur <= maxDate) {
+    const x = xOf(wcur);
     if (x >= LABEL_W) {
-      o += `<line x1="${x}" y1="${HDR_H}" x2="${x}" y2="${HDR_H+totalRowH}" stroke="${GANTT_C.grid}" stroke-width="1"/>`;
-      o += `<text x="${x+3}" y="${HDR_H+totalRowH+16}" font-size="10" fill="#999">${mcur.toLocaleDateString('en-US',{month:'short',year:'2-digit'})}</text>`;
+      const isMajor = wcur.getDate() <= 7; // first week of month
+      o += `<line x1="${x}" y1="${HDR_H}" x2="${x}" y2="${HDR_H+totalRowH}" stroke="${GANTT_C.grid}" stroke-width="${isMajor?1.5:0.6}" opacity="${isMajor?0.8:0.4}"/>`;
+      const mo = wcur.getMonth();
+      if (mo !== lastMonthLabel) {
+        o += `<text x="${x+3}" y="${HDR_H+totalRowH+14}" font-size="10" fill="#888" font-weight="700">${wcur.toLocaleDateString('en-US',{month:'short'})}</text>`;
+        lastMonthLabel = mo;
+      } else {
+        o += `<text x="${x+3}" y="${HDR_H+totalRowH+14}" font-size="9" fill="#aaa">${wcur.getDate()}</text>`;
+      }
     }
-    mcur.setMonth(mcur.getMonth()+1);
+    wcur.setDate(wcur.getDate()+7);
   }
 
   // Header
@@ -807,8 +813,8 @@ function buildGantt(skuList) {
       const barY  = rowY + (COMP_H-BAR_H)/2;
       const is3pl = comp.deliverTo==='3pl';
       const prodCol = is3pl ? GANTT_C.pkg3PL : GANTT_C.pkgVQ;
-      const lbl   = comp.name.length>14 ? comp.name.substring(0,12)+'..' : comp.name;
-      o += `<text x="${LABEL_W-4}" y="${rowY+COMP_H/2+4}" font-size="9" fill="${prodCol}" text-anchor="end" font-weight="700">${lbl}${is3pl?' →3PL':''}</text>`;
+      const lbl   = comp.name.length>16 ? comp.name.substring(0,14)+'..' : comp.name;
+      o += `<text x="${LABEL_W-4}" y="${rowY+COMP_H/2+4}" font-size="9" fill="${prodCol}" text-anchor="end" font-weight="700">${lbl}</text>`;
       // Artwork phase (light blue)
       o += `<rect x="${xOf(comp.designStart)}" y="${barY}" width="${wOf(comp.designStart,comp.printReady)}" height="${BAR_H}" rx="3" fill="${GANTT_C.artwork}"/>`;
       // Production phase
@@ -830,7 +836,7 @@ function buildGantt(skuList) {
       // Supplement Mfg + Pre-bottle row
       const mfgRowY = baseY;
       const mfgBarY = mfgRowY + (MFG_H-BAR_H)/2;
-      o += `<text x="${LABEL_W-4}" y="${mfgRowY+MFG_H/2+4}" font-size="9" fill="${GANTT_C.mfg}" text-anchor="end" font-weight="700">Supp Mfg</text>`;
+      o += `<text x="${LABEL_W-4}" y="${mfgRowY+MFG_H/2+4}" font-size="9" fill="${GANTT_C.mfg}" text-anchor="end" font-weight="700">Supplement Mfg</text>`;
       // mfg bar
       o += `<rect x="${xOf(t.suppMfgStart)}" y="${mfgBarY}" width="${wOf(t.suppMfgStart,t.suppMfgComplete)}" height="${BAR_H}" rx="3" fill="${GANTT_C.mfg}" opacity="0.9"/>`;
       // pre-bottle bar (continuation — dark teal)
@@ -843,13 +849,13 @@ function buildGantt(skuList) {
       // In-bottle testing row (dark teal)
       const testRowY = baseY + MFG_H;
       const testBarY = testRowY + (TEST_H-BAR_H)/2;
-      o += `<text x="${LABEL_W-4}" y="${testRowY+TEST_H/2+4}" font-size="9" fill="${GANTT_C.test}" text-anchor="end" font-weight="700">In-Bottle</text>`;
+      o += `<text x="${LABEL_W-4}" y="${testRowY+TEST_H/2+4}" font-size="9" fill="${GANTT_C.test}" text-anchor="end" font-weight="700">In-Bottle Test</text>`;
       o += `<rect x="${xOf(t.inBottleStart)}" y="${testBarY}" width="${wOf(t.inBottleStart,t.inBottleComplete)}" height="${BAR_H}" rx="3" fill="${GANTT_C.test}"/>`;
 
       // 3PL/launch row (slate)
       const tplRowY = baseY + MFG_H + TEST_H;
       const tplBarY = tplRowY + (VQ_H-BAR_H)/2;
-      o += `<text x="${LABEL_W-4}" y="${tplRowY+VQ_H/2+4}" font-size="9" fill="${GANTT_C.transit}" text-anchor="end" font-weight="700">3PL→Launch</text>`;
+      o += `<text x="${LABEL_W-4}" y="${tplRowY+VQ_H/2+4}" font-size="9" fill="${GANTT_C.transit}" text-anchor="end" font-weight="700">3PL Transit</text>`;
       o += `<rect x="${xOf(r.shipTo3PL)}" y="${tplBarY}" width="${wOf(r.shipTo3PL,r.threePlReceive)}" height="${BAR_H}" rx="3" fill="${GANTT_C.transit}"/>`;
     } else {
       // No mfg: simple Vitaquest+3PL row
