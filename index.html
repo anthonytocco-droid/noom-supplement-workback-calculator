@@ -328,7 +328,7 @@ function toggleAssumptions() {
 }
 
 function workback(launchDateStr, components, mfg={enabled:false}) {
-  const launch         = new Date(launchDateStr);
+  const launch         = new Date(launchDateStr + 'T12:00:00');
   const threePlReceive = subWeeks(launch, 1);
   const shipTo3PL      = subDays(threePlReceive, 5);
 
