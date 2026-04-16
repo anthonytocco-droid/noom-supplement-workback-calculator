@@ -551,6 +551,8 @@ function calculateSingle() {
   const launchVal= document.getElementById('launchDate').value;
   if (!launchVal) { alert('Select a launch date.'); return; }
   if (!comps.single.length) { alert('Add at least one packaging component.'); return; }
+  const alsBody = document.getElementById('alsBody');
+  if (alsBody) { alsBody.style.display = 'none'; const arr = document.querySelector('.als-arrow'); if (arr) arr.textContent = '▶'; }
 
   const mfg = getMfgOpts('single');
   const r   = workback(launchVal, comps.single, mfg);
@@ -922,11 +924,11 @@ function renderActiveLaunches() {
   }).join('');
 
   el.innerHTML = `<div style="margin-top:0;margin-bottom:0;">
-    <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.als-arrow').textContent=this.nextElementSibling.style.display==='none'?'▶':'▼';"
+    <div onclick="var b=document.getElementById('alsBody');b.style.display=b.style.display==='none'?'block':'none';this.querySelector('.als-arrow').textContent=b.style.display==='none'?'▶':'▼';"
       style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin:24px 0 12px 2px;">
-      <span class="als-arrow">▶</span> Active Launch Status
+      <span class="als-arrow">▼</span> Active Launch Status
     </div>
-    <div style="display:none;">${cards}</div>
+    <div id="alsBody">${cards}</div>
   </div>`;
 }
 
