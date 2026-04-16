@@ -58,9 +58,9 @@
     .test-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .test-section { background: #fff; border: 1px solid #e8eaf0; border-radius: 6px; padding: 12px 14px; }
     .test-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #888; margin-bottom: 8px; }
-    .test-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #444; margin-bottom: 6px; }
-    .test-row.opt label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-    .test-row.opt input[type=checkbox] { width: 14px; height: 14px; accent-color: #7c3aed; cursor: pointer; }
+    .test-row { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px; font-size: 13px; color: #444; margin-bottom: 6px; }
+    .test-row.opt label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+    .test-row.opt input[type=checkbox] { width: 13px; height: 13px; accent-color: #7c3aed; cursor: pointer; flex-shrink: 0; }
     .req-badge { background: #dcfce7; color: #166534; border-radius: 3px; padding: 1px 6px; font-size: 10px; font-weight: 700; }
     .opt-badge { background: #f3e8ff; color: #6b21a8; border-radius: 3px; padding: 1px 6px; font-size: 10px; font-weight: 700; }
     .mfg-note { font-size: 11px; color: #059669; font-style: italic; margin-top: 10px; }
@@ -206,13 +206,13 @@
           <div class="test-grid">
             <div class="test-section">
               <div class="test-title">Pre-Bottling 3rd Party Testing</div>
-              <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 week</div>
-              <div class="test-row opt"><label><input type="checkbox" id="extPreBottle" /><span class="opt-badge">Optional</span> External lab — +2 weeks</label></div>
+              <div class="test-row"><span class="req-badge">Required</span><span>Vitaquest — 1 week</span></div>
+              <div class="test-row opt"><label><input type="checkbox" id="extPreBottle" /><span class="opt-badge">Optional</span></label><span>External lab — +2 weeks</span></div>
             </div>
             <div class="test-section">
               <div class="test-title">In-Bottle 3rd Party Testing</div>
-              <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 week</div>
-              <div class="test-row opt"><label><input type="checkbox" id="extInBottle" /><span class="opt-badge">Optional</span> External lab — +2 weeks</label></div>
+              <div class="test-row"><span class="req-badge">Required</span><span>Vitaquest — 1 week</span></div>
+              <div class="test-row opt"><label><input type="checkbox" id="extInBottle" /><span class="opt-badge">Optional</span></label><span>External lab — +2 weeks</span></div>
             </div>
           </div>
         </div>
