@@ -353,8 +353,7 @@ const SKU_LAUNCH_DATES = {
 };
 function prefillLaunchDate(sel, targetId) {
   const date = SKU_LAUNCH_DATES[sel.value];
-  const input = document.getElementById(targetId);
-  if (date && !input.value) input.value = date;
+  if (date) document.getElementById(targetId).value = date;
 }
 
 // ══════════════════════════════════════════
