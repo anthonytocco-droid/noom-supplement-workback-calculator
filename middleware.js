@@ -3,10 +3,8 @@ export const config = { matcher: ['/((?!_vercel).*)'] };
 export default function middleware(request) {
   const authHeader = request.headers.get('authorization');
 
-  const user = process.env.BASIC_AUTH_USER || 'admin';
-  const pass = process.env.BASIC_AUTH_PASSWORD;
-
-  if (!pass) return;
+  const user = 'noom';
+  const pass = 'noom';
 
   if (authHeader) {
     const [scheme, encoded] = authHeader.split(' ');
