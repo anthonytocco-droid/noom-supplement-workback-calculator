@@ -271,7 +271,7 @@ const SKU_LAUNCH_DATES = {
 };
 const SKU_COMPONENTS = {
   'Metabolic': [
-    { name:'Gusset Bag',            weeks:5, vendor:'Stephen Gould', deliverTo:'vitaquest' },
+    { name:'Gusset Bag',            weeks:5, vendor:'Stephen Gould', deliverTo:'vitaquest', artworkDoneDate:'2026-03-31' },
     { name:'Shrink Wrap Jar',       weeks:4, vendor:'Stephen Gould', deliverTo:'3pl' },
     { name:'Corrugate Outer Shipper',weeks:4, vendor:'',             deliverTo:'3pl' },
   ],
@@ -286,7 +286,7 @@ function prefillLaunchDate(sel, targetId) {
   const date = SKU_LAUNCH_DATES[sku];
   document.getElementById(targetId).value = date || '';
   const preset = SKU_COMPONENTS[sku];
-  comps.single = preset ? preset.map(c => ({ ...c, confirmedEta: null, artworkDoneDate: null })) : [];
+  comps.single = preset ? preset.map(c => ({ confirmedEta: null, artworkDoneDate: null, ...c })) : [];
   renderChips('single');
 }
 
