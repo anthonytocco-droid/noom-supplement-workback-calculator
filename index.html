@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Supplement / Skincare Workback Calculator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f4f6f9; color: #1a1a2e; }
+
+    header { background: #1a1a2e; color: #fff; padding: 18px 32px; display: flex; align-items: center; gap: 16px; }
+    header h1 { font-size: 20px; font-weight: 700; }
+    header span { font-size: 13px; color: #aab; display: block; margin-top: 2px; }
+
+    .main { max-width: 1180px; margin: 28px auto; padding: 0 24px; }
+
+    .assumptions { background: #eef3fb; border-left: 4px solid #4a90d9; border-radius: 0 6px 6px 0; padding: 12px 18px; font-size: 13px; color: #334; margin-bottom: 24px; }
+    .assumptions strong { color: #1a1a2e; }
+    .assumptions-toggle { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; font-weight: 700; color: #1a5fa8; font-size: 13px; }
+    .assumptions-toggle:hover { color: #0d3d7a; }
+    .tag { display: inline-block; background: #d0e4f7; color: #1a5fa8; border-radius: 4px; padding: 3px 9px; font-size: 12px; font-weight: 600; margin: 0; }
+
+    /* Cards */
+    .card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 24px; overflow: hidden; }
+    .card-head { padding: 14px 24px; border-bottom: 1px solid #eee; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #1a1a2e; display: flex; justify-content: space-between; align-items: center; }
+    .card-body { padding: 20px 24px; }
+
+    /* Inputs */
+    .input-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.4px; }
+    .field input, .field select { padding: 9px 12px; border: 1.5px solid #dde; border-radius: 6px; font-size: 14px; color: #1a1a2e; background: #fafbfc; outline: none; min-width: 150px; }
+    .field input:focus, .field select:focus { border-color: #4a90d9; background: #fff; }
+
+    /* Component builder */
+    .comp-builder { border: 1.5px solid #e8eaf0; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
+    .comp-builder-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #888; margin-bottom: 12px; }
+    .preset-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .preset-btn { padding: 7px 14px; border: 1.5px solid #dde; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; background: #fff; color: #555; transition: all 0.15s; }
+    .preset-btn:hover { border-color: #4a90d9; color: #1a5fa8; background: #f0f6ff; }
+    .custom-comp-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
+    .custom-comp-row input { min-width: 140px; }
+    .custom-comp-row input.wks { min-width: 0; width: 70px; }
+    .selected-comps { display: flex; flex-wrap: wrap; gap: 8px; min-height: 36px; }
+    .selected-comps:empty::after { content: 'No components added yet'; font-size: 12px; color: #bbb; align-self: center; }
+    .comp-chip { display: inline-flex; align-items: center; gap: 5px; background: #f0f6ff; border: 1px solid #c0d8f5; border-radius: 20px; padding: 5px 10px 5px 12px; font-size: 13px; font-weight: 600; color: #1a5fa8; }
+    .comp-chip .chip-wks { font-size: 11px; color: #888; font-weight: 400; }
+    .comp-chip button { background: none; border: none; cursor: pointer; color: #aaa; font-size: 15px; line-height: 1; padding: 0 2px; }
+    .comp-chip button:hover { color: #e74c3c; }
+
+    /* Manufacturing builder */
+    .mfg-builder { border: 1.5px solid #d1fae5; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; background: #f9fffe; }
+    .mfg-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: #065f46; cursor: pointer; margin-bottom: 0; }
+    .mfg-toggle input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: #059669; }
+    .mfg-options { margin-top: 14px; }
+    .mfg-options.hidden { display: none; }
+    .mfg-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 14px; }
+    .test-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .test-section { background: #fff; border: 1px solid #e8eaf0; border-radius: 6px; padding: 12px 14px; }
+    .test-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #888; margin-bottom: 8px; }
+    .test-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #444; margin-bottom: 6px; }
+    .test-row.opt label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .test-row.opt input[type=checkbox] { width: 14px; height: 14px; accent-color: #7c3aed; cursor: pointer; }
+    .req-badge { background: #dcfce7; color: #166534; border-radius: 3px; padding: 1px 6px; font-size: 10px; font-weight: 700; }
+    .opt-badge { background: #f3e8ff; color: #6b21a8; border-radius: 3px; padding: 1px 6px; font-size: 10px; font-weight: 700; }
+    .mfg-note { font-size: 11px; color: #059669; font-style: italic; margin-top: 10px; }
+
+    /* Buttons */
+    .btn { padding: 9px 22px; border: none; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .btn-primary { background: #1a1a2e; color: #fff; } .btn-primary:hover { background: #2d2d50; }
+    .btn-green { background: #27ae60; color: #fff; } .btn-green:hover { background: #1e8449; }
+    .btn-ghost { background: #eee; color: #555; } .btn-ghost:hover { background: #ddd; }
+
+    /* Alert */
+    .alert { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 18px; margin-bottom: 16px; font-size: 13px; color: #664d03; }
+    .alert strong { color: #533d00; }
+
+    /* Milestone sections */
+    .comp-section { border-bottom: 1px solid #eee; }
+    .comp-section:last-child { border-bottom: none; }
+    .comp-section-head { padding: 10px 18px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .comp-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+    .ms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 1px; background: #eee; }
+    .ms { background: #fff; padding: 12px 15px; }
+    .ms-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #999; letter-spacing: 0.4px; margin-bottom: 4px; }
+    .ms-date { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+    .ms-note { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .ms.green { background: #f0faf5; } .ms.green .ms-date { color: #27ae60; }
+    .ms.amber { background: #fffbf0; } .ms.amber .ms-date { color: #e67e22; }
+    .ms.red   { background: #fff5f5; } .ms.red .ms-date   { color: #e74c3c; }
+    .ms.teal  { background: #f0fdfa; } .ms.teal .ms-date  { color: #0891b2; }
+    .ms.purple{ background: #f5f0ff; } .ms.purple .ms-date{ color: #7c3aed; font-size: 13px; }
+
+    .parallel-note { background: #f5f9ff; border-top: 1px solid #e0eaff; padding: 10px 18px; font-size: 12px; color: #446; }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; }
+    table.summary { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 820px; }
+    table.summary th { background: #f4f6f9; padding: 9px 11px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #666; border-bottom: 1px solid #e0e0e0; }
+    table.summary td { padding: 9px 11px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    table.summary tr:last-child td { border-bottom: none; }
+    table.summary tr:hover td { background: #fafbfd; }
+    .comp-sub { font-size: 11px; color: #888; font-weight: 400; }
+    .pill { display: inline-block; border-radius: 12px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+    .pill-green { background: #e6f9f0; color: #27ae60; } .pill-amber { background: #fff3e0; color: #e67e22; }
+    .pill-red { background: #fde8e8; color: #e74c3c; } .pill-gray { background: #f0f0f0; color: #666; }
+
+    /* Gantt */
+    .gantt-title { padding: 14px 24px 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #888; border-top: 1px solid #eee; }
+    .gantt-subtitle { padding: 0 24px 8px; font-size: 11px; color: #bbb; }
+    .gantt-wrap { padding: 0 24px 16px; overflow-x: auto; }
+    .gantt-wrap svg { display: block; width: 100%; min-width: 640px; }
+    .gantt-legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 4px 24px 16px; font-size: 12px; }
+    .leg-item { display: flex; align-items: center; gap: 6px; color: #555; }
+    .leg-sw { width: 16px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Supplement / Skincare Workback Calculator</h1>
+</div>
+</header>
+
+<div class="main">
+  <div class="assumptions">
+    <div class="assumptions-toggle" onclick="toggleAssumptions()" id="assumptionsToggle">
+      <span>▶ Lead Time Reference</span>
+      <span style="font-weight:400;color:#667;font-size:12px;">Click to expand</span>
+    </div>
+    <div id="assumptionsBody" style="display:none;margin-top:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin-bottom:10px;">
+        <div><strong style="font-size:11px;text-transform:uppercase;letter-spacing:0.4px;color:#556;">→ Vitaquest</strong>
+          <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+            <span class="tag">Gusset Bag — 5 wks (Stephen Gould)</span>
+            <span class="tag">Supplement Mfg — 6–8 wks (concurrent with packaging)</span>
+            <span class="tag">Pre-bottling test — 1 wk req. + 2 wks ext. optional</span>
+            <span class="tag">In-bottle test — 1 wk req. + 2 wks ext. optional</span>
+          </div>
+        </div>
+        <div><strong style="font-size:11px;text-transform:uppercase;letter-spacing:0.4px;color:#556;">→ The Pharmacy Hub (1 wk before launch)</strong>
+          <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+            <span class="tag">Shrink Wrap — 4 wks (Stephen Gould)</span>
+            <span class="tag">Corrugate Outer Shipper — 4 wks</span>
+            <span class="tag">Marketing Postcard — 2 wks</span>
+            <span class="tag">Marketing Booklet — 4 wks</span>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#556;border-top:1px solid #dde;padding-top:8px;margin-top:4px;">
+        Artwork → print-ready: ~5 wks. Supplement mfg starts concurrent with packaging production. Gusset bags must arrive at Vitaquest before fill/seal. <strong>Critical path = longest track between print-ready and fill/seal.</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Single SKU -->
+  <div class="card">
+    <div class="card-head">Calculate Workback for a SKU</div>
+    <div class="card-body">
+      <div class="input-row">
+        <div class="field"><label>SKU Name</label><input type="text" id="skuName" placeholder="e.g. Metabolic" /></div>
+        <div class="field"><label>Launch Date</label><input type="date" id="launchDate" /></div>
+      </div>
+      <!-- Packaging -->
+      <div class="comp-builder">
+        <div class="comp-builder-title">Packaging Components</div>
+        <div class="preset-btns">
+          <button class="preset-btn" onclick="addPreset('single','Gusset Bag',5,'Stephen Gould','vitaquest')">+ Gusset Bag · SG (5 wks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Shrink Wrap',4,'Stephen Gould','3pl')">+ Shrink Wrap · SG (4 wks → 3PL)</button>
+          <button class="preset-btn" onclick="addPreset('single','Corrugate Outer Shipper',4,'','3pl')" style="border-color:#d97706;color:#92400e;">+ Corrugate (4 wks → 3PL)</button>
+          <button class="preset-btn" onclick="addPreset('single','Marketing Postcard',2,'','3pl')" style="border-color:#7c3aed;color:#5b21b6;">+ Postcard (2 wks → 3PL)</button>
+          <button class="preset-btn" onclick="addPreset('single','Marketing Booklet',4,'','3pl')" style="border-color:#7c3aed;color:#5b21b6;">+ Booklet (4 wks → 3PL)</button>
+        </div>
+        <div class="custom-comp-row">
+          <div class="field"><label>Component</label><input type="text" id="customName" placeholder="e.g. Outer Box" /></div>
+          <div class="field"><label>Vendor</label><input type="text" id="customVendor" placeholder="e.g. Stephen Gould" /></div>
+          <div class="field"><label>Delivers To</label>
+            <select id="customDeliverTo" style="min-width:0;">
+              <option value="vitaquest">Vitaquest</option>
+              <option value="3pl">3PL (The Pharmacy Hub)</option>
+            </select>
+          </div>
+          <div class="field"><label>Wks</label><input type="number" id="customWks" class="wks" placeholder="6" min="1" max="52" /></div>
+          <button class="btn btn-ghost" style="padding:9px 14px;" onclick="addCustom('single')">+ Add</button>
+        </div>
+        <div style="font-size:11px;color:#999;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;">Selected Components</div>
+        <div class="selected-comps" id="singleComps"></div>
+      </div>
+      <!-- Manufacturing -->
+      <div class="mfg-builder">
+        <label class="mfg-toggle">
+          <input type="checkbox" id="mfgEnabled" onchange="toggleMfg('single')" checked />
+          Vitaquest Supplement Manufacturing
+        </label>
+        <div class="mfg-options" id="mfgOptions">
+          <div class="mfg-row">
+            <div class="field">
+              <label>Mfg Lead Time (wks)</label>
+              <input type="number" id="mfgWeeks" value="7" min="1" max="52" style="min-width:0;width:80px;" />
+            </div>
+            <div style="font-size:12px;color:#059669;align-self:flex-end;padding-bottom:10px;">Range: 6–8 wks · Concurrent with packaging production</div>
+          </div>
+          <div class="test-grid">
+            <div class="test-section">
+              <div class="test-title">Pre-Bottling Testing (after mfg, before fill/seal)</div>
+              <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 wk</div>
+              <div class="test-row opt"><label><input type="checkbox" id="extPreBottle" /><span class="opt-badge">Optional</span> External lab — +2 wks</label></div>
+            </div>
+            <div class="test-section">
+              <div class="test-title">In-Bottle Testing (after fill/seal, before ship)</div>
+              <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 wk</div>
+              <div class="test-row opt"><label><input type="checkbox" id="extInBottle" /><span class="opt-badge">Optional</span> External lab — +2 wks</label></div>
+            </div>
+          </div>
+          <div class="mfg-note">Supplement mfg starts on same date as packaging production (concurrent). Gusset bags must arrive before fill/seal begins.</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="calculateSingle()">Calculate</button>
+    </div>
+  </div>
+  <div id="singleResult"></div>
+
+  <!-- Portfolio -->
+  <div class="card">
+    <div class="card-head">Portfolio Tracker — Add Multiple SKUs</div>
+    <div class="card-body">
+      <div class="input-row">
+        <div class="field"><label>SKU Name</label><input type="text" id="addSkuName" placeholder="e.g. Vitality" /></div>
+        <div class="field"><label>Launch Date</label><input type="date" id="addLaunchDate" /></div>
+      </div>
+      <!-- Packaging -->
+      <div class="comp-builder">
+        <div class="comp-builder-title">Packaging Components for this SKU</div>
+        <div class="preset-btns">
+          <button class="preset-btn" onclick="addPreset('port','Gusset Bag',5,'Stephen Gould','vitaquest')">+ Gusset Bag · SG (5 wks)</button>
+          <button class="preset-btn" onclick="addPreset('port','Shrink Wrap',4,'Stephen Gould','3pl')">+ Shrink Wrap · SG (4 wks → 3PL)</button>
+          <button class="preset-btn" onclick="addPreset('port','Corrugate Outer Shipper',4,'','3pl')" style="border-color:#d97706;color:#92400e;">+ Corrugate (4 wks → 3PL)</button>
+          <button class="preset-btn" onclick="addPreset('port','Marketing Postcard',2,'','vitaquest')" style="border-color:#7c3aed;color:#5b21b6;">+ Postcard (2 wks → 3PL)</button>
+          <button class="preset-btn" onclick="addPreset('port','Marketing Booklet',4,'','vitaquest')" style="border-color:#7c3aed;color:#5b21b6;">+ Booklet (4 wks → 3PL)</button>
+        </div>
+        <div class="custom-comp-row">
+          <div class="field"><label>Component</label><input type="text" id="portCustomName" placeholder="e.g. Outer Box" /></div>
+          <div class="field"><label>Vendor</label><input type="text" id="portCustomVendor" placeholder="e.g. Stephen Gould" /></div>
+          <div class="field"><label>Delivers To</label>
+            <select id="portCustomDeliverTo" style="min-width:0;">
+              <option value="vitaquest">Vitaquest</option>
+              <option value="3pl">3PL (The Pharmacy Hub)</option>
+            </select>
+          </div>
+          <div class="field"><label>Wks</label><input type="number" id="portCustomWks" class="wks" placeholder="6" min="1" max="52" /></div>
+          <button class="btn btn-ghost" style="padding:9px 14px;" onclick="addCustom('port')">+ Add</button>
+        </div>
+        <div style="font-size:11px;color:#999;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;">Selected Components</div>
+        <div class="selected-comps" id="portComps"></div>
+      </div>
+      <!-- Manufacturing -->
+      <div class="mfg-builder">
+        <label class="mfg-toggle">
+          <input type="checkbox" id="portMfgEnabled" onchange="toggleMfg('port')" checked />
+          Vitaquest Supplement Manufacturing
+        </label>
+        <div class="mfg-options" id="portMfgOptions">
+          <div class="mfg-row">
+            <div class="field">
+              <label>Mfg Lead Time (wks)</label>
+              <input type="number" id="portMfgWeeks" value="7" min="1" max="52" style="min-width:0;width:80px;" />
+            </div>
+            <div style="font-size:12px;color:#059669;align-self:flex-end;padding-bottom:10px;">Range: 6–8 wks · Concurrent with packaging</div>
+          </div>
+          <div class="test-grid">
+            <div class="test-section">
+              <div class="test-title">Pre-Bottling Testing</div>
+              <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 wk</div>
+              <div class="test-row opt"><label><input type="checkbox" id="portExtPreBottle" /><span class="opt-badge">Optional</span> External lab — +2 wks</label></div>
+            </div>
+            <div class="test-section">
+              <div class="test-title">In-Bottle Testing</div>
+              <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 wk</div>
+              <div class="test-row opt"><label><input type="checkbox" id="portExtInBottle" /><span class="opt-badge">Optional</span> External lab — +2 wks</label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-green" onclick="addToPortfolio()">+ Add SKU to Portfolio</button>
+        <button class="btn btn-ghost" onclick="clearPortfolio()">Clear Portfolio</button>
+      </div>
+    </div>
+  </div>
+  <div id="portfolioResults"></div>
+</div>
+
+<footer style="text-align:center;color:#aaa;font-size:12px;padding:28px 0 20px;">
+  Noom Supply Chain &amp; Fulfillment Operations &nbsp;·&nbsp; Vitaquest Workback v3.0
+</footer>
+
+<script>
+// ══════════════════════════════════════════
+//  Date helpers
+// ══════════════════════════════════════════
+const MS_DAY = 86400000;
+function addDays(d,n)  { const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function subDays(d,n)  { return addDays(d,-n); }
+function subWeeks(d,n) { return subDays(d,n*7); }
+function diffDays(a,b) { return Math.round((a-b)/MS_DAY); }
+function today()       { const d=new Date(); d.setHours(0,0,0,0); return d; }
+function fmt(d,yr)     { return d.toLocaleDateString('en-US',{month:'short',day:'numeric',...(yr?{year:'numeric'}:{})}); }
+function msClass(days) { if(days<0||days<=14)return 'red'; if(days<=28)return 'amber'; return ''; }
+
+// ══════════════════════════════════════════
+//  UI toggles
+// ══════════════════════════════════════════
+function toggleMfg(panel) {
+  const s = panel === 'single';
+  const enabled = document.getElementById(s ? 'mfgEnabled' : 'portMfgEnabled').checked;
+  const el = document.getElementById(s ? 'mfgOptions' : 'portMfgOptions');
+  el.classList.toggle('hidden', !enabled);
+}
+
+// ══════════════════════════════════════════
+//  Component state
+// ══════════════════════════════════════════
+const comps = { single: [], port: [] };
+
+function addPreset(panel, name, weeks, vendor='', deliverTo='vitaquest') {
+  if (comps[panel].some(c => c.name === name)) return;
+  comps[panel].push({ name, weeks, vendor, deliverTo });
+  renderChips(panel);
+}
+function addCustom(panel) {
+  const s = panel === 'single';
+  const n = document.getElementById(s ? 'customName'      : 'portCustomName').value.trim();
+  const v = document.getElementById(s ? 'customVendor'    : 'portCustomVendor').value.trim();
+  const d = document.getElementById(s ? 'customDeliverTo' : 'portCustomDeliverTo').value;
+  const w = parseInt(document.getElementById(s ? 'customWks' : 'portCustomWks').value);
+  if (!n) { alert('Enter a component name.'); return; }
+  if (!w||w<1) { alert('Enter a valid lead time.'); return; }
+  comps[panel].push({ name:n, weeks:w, vendor:v, deliverTo:d });
+  renderChips(panel);
+  ['Name','Vendor','Wks'].forEach(f => {
+    const el = document.getElementById((s?'custom':'portCustom')+f);
+    if (el) el.value = '';
+  });
+}
+function removeComp(panel, idx) { comps[panel].splice(idx,1); renderChips(panel); }
+function renderChips(panel) {
+  const el = document.getElementById(panel==='single'?'singleComps':'portComps');
+  el.innerHTML = comps[panel].map((c,i) => {
+    const dst = c.deliverTo==='3pl'
+      ? '<span style="background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-size:10px;margin-left:3px;">→3PL</span>'
+      : '<span style="background:#e0f2fe;color:#0369a1;border-radius:3px;padding:1px 5px;font-size:10px;margin-left:3px;">→VQ</span>';
+    return `<div class="comp-chip">${c.name}<span class="chip-wks">(${c.weeks}wk${c.vendor?' · '+c.vendor:''})</span>${dst}<button onclick="removeComp('${panel}',${i})">×</button></div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  Get manufacturing options from UI
+// ══════════════════════════════════════════
+function getMfgOpts(panel) {
+  const s = panel === 'single';
+  const enabled = document.getElementById(s ? 'mfgEnabled' : 'portMfgEnabled').checked;
+  if (!enabled) return { enabled: false };
+  return {
+    enabled: true,
+    mfgWeeks:         parseInt(document.getElementById(s ? 'mfgWeeks'        : 'portMfgWeeks').value)    || 7,
+    externalPreBottle:document.getElementById(s ? 'extPreBottle'  : 'portExtPreBottle').checked,
+    externalInBottle: document.getElementById(s ? 'extInBottle'   : 'portExtInBottle').checked,
+  };
+}
+
+// ══════════════════════════════════════════
+//  Core workback — multi-component + mfg
+// ══════════════════════════════════════════
+function toggleAssumptions() {
+  const body = document.getElementById('assumptionsBody');
+  const toggle = document.getElementById('assumptionsToggle');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  toggle.querySelector('span').textContent = (open ? '▼' : '▶') + ' Lead Time Reference';
+  toggle.querySelectorAll('span')[1].textContent = open ? 'Click to collapse' : 'Click to expand';
+}
+
+function workback(launchDateStr, components, mfg={enabled:false}) {
+  const launch         = new Date(launchDateStr);
+  const threePlReceive = subWeeks(launch, 1);
+  const shipTo3PL      = subDays(threePlReceive, 5);
+
+  let arrivedByVQ, productReady, mfgTrack = null;
+
+  if (mfg.enabled) {
+    const preBottleWks = 1 + (mfg.externalPreBottle ? 2 : 0);
+    const inBottleWks  = 1 + (mfg.externalInBottle  ? 2 : 0);
+    const mfgWks       = mfg.mfgWeeks || 7;
+
+    // Work backward from ship
+    const inBottleComplete    = subDays(shipTo3PL, 2);
+    const inBottleStart       = subWeeks(inBottleComplete, inBottleWks);  // = fill/seal complete
+    const fillSealComplete    = new Date(inBottleStart);
+    const fillSealStart       = subDays(fillSealComplete, 2);             // ~2 days to fill/seal
+    const preBottleComplete   = new Date(fillSealStart);                  // pre-bottle done by fill/seal start
+    const preBottleStart      = subWeeks(preBottleComplete, preBottleWks);
+    const suppMfgComplete     = new Date(preBottleStart);                 // mfg done before pre-bottle
+    const suppMfgStart        = subWeeks(suppMfgComplete, mfgWks);       // concurrent with packaging
+
+    arrivedByVQ = new Date(fillSealStart); // bags must arrive by fill/seal start
+    productReady = inBottleComplete;
+
+    mfgTrack = {
+      mfgWks, preBottleWks, inBottleWks,
+      suppMfgStart, suppMfgComplete,
+      preBottleStart, preBottleComplete,
+      fillSealStart, fillSealComplete,
+      inBottleStart, inBottleComplete,
+      externalPreBottle: mfg.externalPreBottle,
+      externalInBottle:  mfg.externalInBottle,
+    };
+  } else {
+    // No manufacturing: old model — product ready = 2 days before ship
+    productReady = subDays(shipTo3PL, 2);
+    arrivedByVQ  = subDays(productReady, 2);
+  }
+
+  // Packaging component timelines
+  const compTimelines = components.map(({name, weeks, vendor, deliverTo}) => {
+    const dest    = deliverTo || 'vitaquest';
+    const arrives = dest === '3pl' ? subWeeks(launch, 1) : new Date(arrivedByVQ);
+    const printReady  = subWeeks(arrives, weeks);
+    const designStart = subWeeks(printReady, 5);
+    return {
+      name, weeks, vendor, deliverTo: dest, arrives, printReady, designStart,
+      daysUntilArtwork: diffDays(printReady, today()),
+      daysUntilArrives: diffDays(arrives, today()),
+    };
+  });
+
+  // Critical path: VQ-bound packaging components
+  const vqComps  = compTimelines.filter(c => c.deliverTo !== '3pl');
+  const critPool = vqComps.length ? vqComps : compTimelines;
+  const critical = critPool.length
+    ? critPool.reduce((a,b) => a.printReady < b.printReady ? a : b)
+    : null;
+
+  // vqMfgStart: earliest of packaging critical path OR supplement mfg start
+  let vqMfgStart = critical ? new Date(critical.printReady) : new Date(launch);
+  if (mfgTrack && mfgTrack.suppMfgStart < vqMfgStart) vqMfgStart = new Date(mfgTrack.suppMfgStart);
+
+  return {
+    launch, threePlReceive, shipTo3PL, arrivedByVQ, productReady,
+    mfgComplete: productReady,  // backward compat
+    components: compTimelines, critical, vqMfgStart,
+    mfgTrack,
+    daysToLaunch: diffDays(launch, today()),
+  };
+}
+
+function statusPill(d) {
+  if(d<0)  return ['LAUNCHED',    'pill-green'];
+  if(d<=7) return ['IMMINENT',    'pill-red'];
+  if(d<=60)return ['IN PROGRESS', 'pill-amber'];
+  return ['UPCOMING','pill-gray'];
+}
+
+// ══════════════════════════════════════════
+//  Color palette
+// ══════════════════════════════════════════
+// Simplified 3-hue palette
+const GANTT_C = {
+  artwork:  '#93c5fd',  // light blue  — artwork / design phase
+  pkgVQ:    '#3b82f6',  // blue        — VQ-bound packaging production
+  pkg3PL:   '#f59e0b',  // amber       — 3PL-bound (corrugate)
+  mfg:      '#0891b2',  // teal        — supplement manufacturing
+  test:     '#0e7490',  // dark teal   — pre-bottle & in-bottle testing
+  transit:  '#64748b',  // slate       — 3PL transit
+  launch:   '#e74c3c',  // red         — launch marker & today line
+  today:    '#e74c3c',
+  grid:     '#e8eaf0',
+  rowAlt:   '#f9fafb',
+};
+
+// ══════════════════════════════════════════
+//  Single SKU renderer
+// ══════════════════════════════════════════
+function calculateSingle() {
+  const name     = document.getElementById('skuName').value.trim() || 'SKU';
+  const launchVal= document.getElementById('launchDate').value;
+  if (!launchVal) { alert('Select a launch date.'); return; }
+  if (!comps.single.length) { alert('Add at least one packaging component.'); return; }
+
+  const mfg = getMfgOpts('single');
+  const r   = workback(launchVal, comps.single, mfg);
+  const [stLabel, stCls] = statusPill(r.daysToLaunch);
+
+  // Alerts
+  const alerts = [];
+  r.components.forEach(c => {
+    if (c.daysUntilArtwork < 0)
+      alerts.push(`<strong>OVERDUE — ${c.name}:</strong> Artwork due was ${fmt(c.printReady)} (${Math.abs(c.daysUntilArtwork)} days ago).`);
+    else if (c.daysUntilArtwork <= 14)
+      alerts.push(`<strong>URGENT — ${c.name}:</strong> Artwork due in ${c.daysUntilArtwork} days (${fmt(c.printReady)}).`);
+    const dest = c.deliverTo === '3pl' ? 'The Pharmacy Hub' : 'Vitaquest';
+    if (c.daysUntilArrives >= 0 && c.daysUntilArrives <= 14)
+      alerts.push(`<strong>URGENT — ${c.name}:</strong> Must arrive at ${dest} in ${c.daysUntilArrives} days (${fmt(c.arrives)}).`);
+  });
+  const alertHTML = alerts.length ? `<div class="alert">${alerts.join('<br/>')}</div>` : '';
+
+  // Packaging component sections
+  const compSections = r.components.map((c,i) => {
+    const color       = c.deliverTo === '3pl' ? '#f59e0b' : '#3b82f6';
+    const vendorLabel = c.vendor || 'Vendor';
+    const is3pl       = c.deliverTo === '3pl';
+    const artCls      = msClass(c.daysUntilArtwork);
+    const destBadge   = is3pl
+      ? `<span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">→ The Pharmacy Hub</span>`
+      : `<span style="background:#e0f2fe;color:#0369a1;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">→ Vitaquest</span>`;
+    const arriveLabel = is3pl ? 'Arrives at The Pharmacy Hub' : 'Arrives at Vitaquest';
+    const arriveNote  = is3pl ? 'Needed 1 wk before launch — independent track' : r.mfgTrack ? 'Fill/seal starts when last VQ component + tested supplement ready' : 'Fill/seal when last component arrives';
+    const prodNote    = is3pl ? `${c.weeks} wks — ships direct to 3PL` : `${c.weeks} wks — concurrent w/ supplement mfg`;
+    return `
+      <div class="comp-section">
+        <div class="comp-section-head">
+          <div class="comp-dot" style="background:${color}"></div>${c.name}
+          ${destBadge}
+          ${c.vendor ? `<span style="background:#f0f4ff;color:#3b5bdb;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">${c.vendor}</span>` : ''}
+          <span style="font-weight:400;color:#aaa;">${c.weeks}-wk lead time</span>
+          ${c===r.critical?'<span style="background:#fde8e8;color:#e74c3c;border-radius:4px;padding:2px 7px;font-size:10px;">CRITICAL PATH</span>':''}
+        </div>
+        <div class="ms-grid">
+          <div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 wks before artwork due</div></div>
+          <div class="ms ${artCls}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div><div class="ms-note">Sent to ${vendorLabel||'vendor'}${c.daysUntilArtwork>=0?' — '+c.daysUntilArtwork+'d from today':' — OVERDUE'}</div></div>
+          <div class="ms purple"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div><div class="ms-note">${prodNote}</div></div>
+          <div class="ms ${msClass(c.daysUntilArrives)}"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div><div class="ms-note">${arriveNote}</div></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Manufacturing section (if enabled)
+  let mfgSection = '';
+  if (r.mfgTrack) {
+    const t = r.mfgTrack;
+    const dPreBottle = diffDays(t.preBottleStart, today());
+    const dInBottle  = diffDays(t.inBottleStart, today());
+    mfgSection = `
+      <div class="comp-section">
+        <div class="comp-section-head">
+          <div class="comp-dot" style="background:#0891b2"></div>
+          Vitaquest Supplement Manufacturing
+          <span style="background:#e0f7f7;color:#0e7490;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">${t.mfgWks} wks — concurrent with packaging</span>
+        </div>
+        <div class="ms-grid">
+          <div class="ms teal"><div class="ms-label">Mfg Start</div><div class="ms-date">${fmt(t.suppMfgStart,true)}</div><div class="ms-note">Same date as print-ready artwork — concurrent</div></div>
+          <div class="ms teal"><div class="ms-label">Supplement Mfg Complete</div><div class="ms-date">${fmt(t.suppMfgComplete,true)}</div><div class="ms-note">Pre-bottling testing begins</div></div>
+          <div class="ms ${msClass(dPreBottle)}"><div class="ms-label">Pre-Bottling Test (${t.preBottleWks} wk${t.preBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.preBottleStart)} → ${fmt(t.preBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalPreBottle?' + external lab (2 wks)':''}</div></div>
+          <div class="ms green"><div class="ms-label">Fill / Seal</div><div class="ms-date">${fmt(t.fillSealStart,true)}</div><div class="ms-note">Tested supplement + bags both required</div></div>
+          <div class="ms ${msClass(dInBottle)}"><div class="ms-label">In-Bottle Test (${t.inBottleWks} wk${t.inBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.inBottleStart)} → ${fmt(t.inBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalInBottle?' + external lab (2 wks)':''}</div></div>
+          <div class="ms green"><div class="ms-label">Ships to 3PL</div><div class="ms-date">${fmt(r.shipTo3PL,true)}</div><div class="ms-note">After in-bottle testing complete</div></div>
+        </div>
+      </div>`;
+  }
+
+  // Combined summary
+  const combinedSection = `
+    <div class="comp-section">
+      <div class="comp-section-head"><div class="comp-dot" style="background:#27ae60"></div>Launch Summary</div>
+      <div class="ms-grid">
+        <div class="ms"><div class="ms-label">3PL Must Receive By</div><div class="ms-date">${fmt(r.threePlReceive,true)}</div><div class="ms-note">1 wk before launch</div></div>
+        <div class="ms green"><div class="ms-label">Launch Date</div><div class="ms-date">${fmt(r.launch,true)}</div><div class="ms-note">${r.daysToLaunch>0?r.daysToLaunch+'d away':r.daysToLaunch===0?'TODAY':Math.abs(r.daysToLaunch)+'d ago'}</div></div>
+      </div>
+    </div>`;
+
+  const ganttSVG = buildGantt([{name, r}]);
+  const critName = r.critical ? r.critical.name : '—';
+  const critDate = r.critical ? fmt(r.critical.printReady,true) : '—';
+
+  document.getElementById('singleResult').innerHTML = `
+    ${alertHTML}
+    <div class="card">
+      <div class="card-head"><span>${name}</span><span class="pill ${stCls}">${stLabel} · Launch ${fmt(r.launch,true)}</span></div>
+      ${compSections}${mfgSection}${combinedSection}
+      <div class="parallel-note">
+        <strong>Packaging critical path:</strong> ${critName} — artwork due ${critDate}.
+        ${r.mfgTrack ? `<strong>Mfg track:</strong> supplement mfg starts ${fmt(r.mfgTrack.suppMfgStart)} (concurrent), fill/seal ${fmt(r.mfgTrack.fillSealStart)}.` : ''}
+      </div>
+      <div class="gantt-title">Gantt Chart</div>
+      <div class="gantt-subtitle">Light blue = Artwork. Blue = Packaging → Vitaquest. Amber = Corrugate → 3PL. Teal = Supplement Mfg + Testing. ◆ = Launch.</div>
+      <div class="gantt-wrap">${ganttSVG}</div>
+      ${buildLegend(r)}
+    </div>`;
+}
+
+// ══════════════════════════════════════════
+//  Portfolio tracker
+// ══════════════════════════════════════════
+let portfolio = [];
+
+function addToPortfolio() {
+  const name     = document.getElementById('addSkuName').value.trim();
+  const launchVal= document.getElementById('addLaunchDate').value;
+  if (!name)     { alert('Enter a SKU name.'); return; }
+  if (!launchVal){ alert('Select a launch date.'); return; }
+  if (!comps.port.length) { alert('Add at least one packaging component.'); return; }
+  portfolio.push({ name, launchVal, components:[...comps.port], mfg: getMfgOpts('port') });
+  comps.port = [];
+  renderChips('port');
+  renderPortfolio();
+  document.getElementById('addSkuName').value = '';
+  document.getElementById('addLaunchDate').value = '';
+}
+function clearPortfolio() { portfolio = []; renderPortfolio(); }
+
+function renderPortfolio() {
+  if (!portfolio.length) { document.getElementById('portfolioResults').innerHTML=''; return; }
+
+  const sorted  = [...portfolio].sort((a,b)=>new Date(a.launchVal)-new Date(b.launchVal));
+  const skuList = sorted.map(s=>({name:s.name, r:workback(s.launchVal, s.components, s.mfg)}));
+
+  // Alerts
+  const alerts = [];
+  skuList.forEach(({name,r}) => {
+    r.components.forEach(c => {
+      if (c.daysUntilArtwork>=0&&c.daysUntilArtwork<=14)
+        alerts.push(`<strong>${name} — ${c.name}:</strong> Artwork due in ${c.daysUntilArtwork} days (${fmt(c.printReady)})`);
+      else if (c.daysUntilArtwork<0)
+        alerts.push(`<strong>${name} — ${c.name}:</strong> Artwork overdue by ${Math.abs(c.daysUntilArtwork)} days`);
+    });
+  });
+  const alertHTML = alerts.length?`<div class="alert"><strong>Action Required:</strong><br/>${alerts.join('<br/>')}</div>`:'';
+
+  // Table
+  const rows = skuList.map(({name,r}) => {
+    const [stLabel,stCls] = statusPill(r.daysToLaunch);
+    return r.components.map((c,i) => {
+      const artCls = c.daysUntilArtwork<0?'style="color:#e74c3c;font-weight:700"':c.daysUntilArtwork<=14?'style="color:#e67e22;font-weight:700"':'';
+      const arrCls = c.daysUntilArrives>=0&&c.daysUntilArrives<=14?'style="color:#e67e22;font-weight:700"':'';
+      const mfgCell = r.mfgTrack ? `${fmt(r.mfgTrack.suppMfgStart)} → ${fmt(r.mfgTrack.inBottleComplete)}` : '—';
+      return `<tr>
+        <td>${i===0?`<strong>${name}</strong>`:''}</td>
+        <td><span style="color:${c.deliverTo==='3pl'?'#b45309':'#1d4ed8'};font-weight:600">${c.name}</span><span class="comp-sub"> ${c.weeks}wk${c.vendor?' · '+c.vendor:''}</span></td>
+        <td ${artCls}>${fmt(c.printReady)}</td>
+        <td ${arrCls}>${fmt(c.arrives)}</td>
+        ${i===0?`<td rowspan="${r.components.length}" style="vertical-align:middle;font-size:12px;">${mfgCell}</td>
+        <td rowspan="${r.components.length}" style="vertical-align:middle;">${r.mfgTrack?fmt(r.mfgTrack.fillSealStart):fmt(r.arrivedByVQ)}</td>
+        <td rowspan="${r.components.length}" style="vertical-align:middle;"><strong>${fmt(r.launch,true)}</strong></td>
+        <td rowspan="${r.components.length}" style="vertical-align:middle;"><span class="pill ${stCls}">${stLabel}</span></td>`:''}
+      </tr>`;
+    }).join('');
+  }).join('');
+
+  const ganttSVG = buildGantt(skuList);
+  document.getElementById('portfolioResults').innerHTML = `
+    ${alertHTML}
+    <div class="card">
+      <div class="card-head">Portfolio Launch Calendar</div>
+      <div class="table-wrap">
+        <table class="summary"><thead><tr>
+          <th>SKU</th><th>Component</th><th>Artwork Due</th><th>@ Destination By</th>
+          <th>Supplement Mfg + Testing</th><th>Fill/Seal</th><th>Launch</th><th>Status</th>
+        </tr></thead><tbody>${rows}</tbody></table>
+      </div>
+      <div class="gantt-title">Portfolio Gantt</div>
+      <div class="gantt-subtitle">Light blue = Artwork. Blue = Packaging → Vitaquest. Amber = Corrugate → 3PL. Teal = Supplement Mfg + Testing. ◆ = Launch.</div>
+      <div class="gantt-wrap">${ganttSVG}</div>
+      ${buildLegend(skuList[0]?.r)}
+    </div>`;
+}
+
+// ══════════════════════════════════════════
+//  Gantt SVG builder
+// ══════════════════════════════════════════
+function buildGantt(skuList) {
+  if (!skuList.length) return '';
+
+  const LABEL_W = 122; const SVG_W = 1060; const CHART_W = SVG_W - LABEL_W - 12;
+  const COMP_H = 26;   // per packaging component row
+  const MFG_H  = 26;   // supplement mfg + pre-bottle row
+  const TEST_H = 26;   // in-bottle test row
+  const VQ_H   = 26;   // 3PL/launch row
+  const SEP    = 6;
+  const BAR_H  = 12;
+  const HDR_H  = 38; const FOOT_H = 26;
+  const todayDate = today();
+
+  // Row heights per SKU
+  function skuRowH(r) {
+    return r.components.length * COMP_H + (r.mfgTrack ? MFG_H + TEST_H : 0) + VQ_H;
+  }
+
+  // Date range
+  const allDates = skuList.flatMap(s => [
+    ...s.r.components.map(c => c.designStart), s.r.launch,
+    ...(s.r.mfgTrack ? [s.r.mfgTrack.suppMfgStart] : []),
+  ]);
+  const minDate   = subDays(new Date(Math.min(...allDates.map(d=>d.getTime()))), 10);
+  const maxDate   = addDays(new Date(Math.max(...allDates.map(d=>d.getTime()))), 14);
+  const totalDays = diffDays(maxDate, minDate) || 1;
+
+  function xOf(d) { return LABEL_W + (diffDays(d,minDate)/totalDays)*CHART_W; }
+  function wOf(a,b) { return Math.max(xOf(b)-xOf(a), 2); }
+
+  const totalRowH = skuList.reduce((s,{r})=>s+skuRowH(r)+SEP, 0);
+  const SVG_H = HDR_H + totalRowH + FOOT_H;
+
+  let o = `<svg viewBox="0 0 ${SVG_W} ${SVG_H}" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">`;
+  o += `<rect width="${SVG_W}" height="${SVG_H}" fill="#fff"/>`;
+
+  // Monthly grid
+  const mcur = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+  while (mcur <= maxDate) {
+    const x = xOf(mcur);
+    if (x >= LABEL_W) {
+      o += `<line x1="${x}" y1="${HDR_H}" x2="${x}" y2="${HDR_H+totalRowH}" stroke="${GANTT_C.grid}" stroke-width="1"/>`;
+      o += `<text x="${x+3}" y="${HDR_H+totalRowH+16}" font-size="10" fill="#999">${mcur.toLocaleDateString('en-US',{month:'short',year:'2-digit'})}</text>`;
+    }
+    mcur.setMonth(mcur.getMonth()+1);
+  }
+
+  // Header
+  o += `<rect x="0" y="0" width="${SVG_W}" height="${HDR_H}" fill="#1a1a2e"/>`;
+  o += `<text x="8" y="24" font-size="11" fill="#aab" font-weight="700">SKU</text>`;
+  const legHdr = [['Artwork','#93c5fd'],['Packaging (VQ)','#3b82f6'],['Corrugate (3PL)','#f59e0b'],['Supplement Mfg','#0891b2'],['Testing','#0e7490'],['3PL Transit','#64748b']];
+  let lx = LABEL_W + 10;
+  legHdr.forEach(([lbl,col]) => {
+    o += `<rect x="${lx}" y="14" width="11" height="9" rx="2" fill="${col}"/>`;
+    o += `<text x="${lx+14}" y="23" font-size="9" fill="#dde">${lbl}</text>`;
+    lx += lbl.length * 5.5 + 22;
+  });
+
+  // SKU rows
+  let curY = HDR_H;
+  skuList.forEach(({name, r}, si) => {
+    const rh = skuRowH(r);
+    if (si%2===1) o += `<rect x="${LABEL_W}" y="${curY}" width="${CHART_W}" height="${rh}" fill="${GANTT_C.rowAlt}"/>`;
+    o += `<text x="6" y="${curY+rh/2+4}" font-size="11" fill="#222" font-weight="700">${name}</text>`;
+
+    // Packaging component rows
+    r.components.forEach((comp,ci) => {
+      const rowY  = curY + ci*COMP_H;
+      const barY  = rowY + (COMP_H-BAR_H)/2;
+      const is3pl = comp.deliverTo==='3pl';
+      const prodCol = is3pl ? GANTT_C.pkg3PL : GANTT_C.pkgVQ;
+      const lbl   = comp.name.length>14 ? comp.name.substring(0,12)+'..' : comp.name;
+      o += `<text x="${LABEL_W-4}" y="${rowY+COMP_H/2+4}" font-size="9" fill="${prodCol}" text-anchor="end" font-weight="700">${lbl}${is3pl?' →3PL':''}</text>`;
+      // Artwork phase (light blue)
+      o += `<rect x="${xOf(comp.designStart)}" y="${barY}" width="${wOf(comp.designStart,comp.printReady)}" height="${BAR_H}" rx="3" fill="${GANTT_C.artwork}"/>`;
+      // Production phase
+      const pX = xOf(comp.printReady);
+      const pW = wOf(comp.printReady, comp.arrives);
+      o += `<rect x="${pX}" y="${barY}" width="${pW}" height="${BAR_H}" rx="3" fill="${prodCol}"/>`;
+      o += `<line x1="${pX}" y1="${barY}" x2="${pX}" y2="${barY+BAR_H}" stroke="#fff" stroke-width="1.5"/>`;
+      if (is3pl) {
+        const ax = xOf(comp.arrives);
+        o += `<rect x="${ax-4}" y="${barY}" width="8" height="${BAR_H}" rx="1" fill="#b45309"/>`;
+      } else if (comp===r.critical) {
+        o += `<line x1="${pX}" y1="${curY}" x2="${pX}" y2="${curY+rh}" stroke="${GANTT_C.launch}" stroke-width="1" stroke-dasharray="3,3" opacity="0.35"/>`;
+      }
+    });
+
+    const baseY = curY + r.components.length*COMP_H;
+
+    if (r.mfgTrack) {
+      const t = r.mfgTrack;
+
+      // Supplement Mfg + Pre-bottle row
+      const mfgRowY = baseY;
+      const mfgBarY = mfgRowY + (MFG_H-BAR_H)/2;
+      o += `<text x="${LABEL_W-4}" y="${mfgRowY+MFG_H/2+4}" font-size="9" fill="${GANTT_C.mfg}" text-anchor="end" font-weight="700">Supp Mfg</text>`;
+      // mfg bar
+      o += `<rect x="${xOf(t.suppMfgStart)}" y="${mfgBarY}" width="${wOf(t.suppMfgStart,t.suppMfgComplete)}" height="${BAR_H}" rx="3" fill="${GANTT_C.mfg}" opacity="0.9"/>`;
+      // pre-bottle bar (continuation — dark teal)
+      o += `<rect x="${xOf(t.preBottleStart)}" y="${mfgBarY}" width="${wOf(t.preBottleStart,t.preBottleComplete)}" height="${BAR_H}" rx="3" fill="${GANTT_C.test}"/>`;
+      // fill/seal marker (vertical line)
+      const fsX = xOf(t.fillSealStart);
+      o += `<line x1="${fsX}" y1="${mfgRowY}" x2="${fsX}" y2="${mfgRowY+MFG_H+TEST_H}" stroke="#1a1a2e" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.4"/>`;
+      o += `<text x="${fsX+3}" y="${mfgRowY+MFG_H-2}" font-size="8" fill="#1a1a2e" font-weight="700" opacity="0.6">Fill/Seal</text>`;
+
+      // In-bottle testing row (dark teal)
+      const testRowY = baseY + MFG_H;
+      const testBarY = testRowY + (TEST_H-BAR_H)/2;
+      o += `<text x="${LABEL_W-4}" y="${testRowY+TEST_H/2+4}" font-size="9" fill="${GANTT_C.test}" text-anchor="end" font-weight="700">In-Bottle</text>`;
+      o += `<rect x="${xOf(t.inBottleStart)}" y="${testBarY}" width="${wOf(t.inBottleStart,t.inBottleComplete)}" height="${BAR_H}" rx="3" fill="${GANTT_C.test}"/>`;
+
+      // 3PL/launch row (slate)
+      const tplRowY = baseY + MFG_H + TEST_H;
+      const tplBarY = tplRowY + (VQ_H-BAR_H)/2;
+      o += `<text x="${LABEL_W-4}" y="${tplRowY+VQ_H/2+4}" font-size="9" fill="${GANTT_C.transit}" text-anchor="end" font-weight="700">3PL→Launch</text>`;
+      o += `<rect x="${xOf(r.shipTo3PL)}" y="${tplBarY}" width="${wOf(r.shipTo3PL,r.threePlReceive)}" height="${BAR_H}" rx="3" fill="${GANTT_C.transit}"/>`;
+    } else {
+      // No mfg: simple Vitaquest+3PL row
+      const vqRowY = baseY;
+      const vqBarY = vqRowY + (VQ_H-BAR_H)/2;
+      o += `<text x="${LABEL_W-4}" y="${vqRowY+VQ_H/2+4}" font-size="9" fill="${GANTT_C.mfg}" text-anchor="end" font-weight="700">VQ+3PL</text>`;
+      o += `<rect x="${xOf(r.vqMfgStart)}" y="${vqBarY}" width="${wOf(r.vqMfgStart,r.productReady)}" height="${BAR_H}" rx="3" fill="${GANTT_C.mfg}"/>`;
+      o += `<rect x="${xOf(r.productReady)}" y="${vqBarY}" width="${wOf(r.productReady,r.threePlReceive)}" height="${BAR_H}" rx="3" fill="${GANTT_C.transit}"/>`;
+    }
+
+    // Launch diamond (on bottom row of SKU)
+    const launchRowY = baseY + (r.mfgTrack ? MFG_H+TEST_H : 0);
+    const dlx = xOf(r.launch);
+    const dly = launchRowY + VQ_H/2;
+    const ds  = 7;
+    o += `<polygon points="${dlx},${dly-ds} ${dlx+ds},${dly} ${dlx},${dly+ds} ${dlx-ds},${dly}" fill="${GANTT_C.launch}"/>`;
+    o += `<text x="${dlx+9}" y="${dly+4}" font-size="9" fill="${GANTT_C.launch}" font-weight="700">${fmt(r.launch)}</text>`;
+
+    o += `<line x1="0" y1="${curY+rh}" x2="${SVG_W}" y2="${curY+rh}" stroke="#ddd" stroke-width="1"/>`;
+    curY += rh + SEP;
+  });
+
+  // Today line
+  if (todayDate >= minDate && todayDate <= maxDate) {
+    const tx = xOf(todayDate);
+    o += `<line x1="${tx}" y1="${HDR_H-5}" x2="${tx}" y2="${curY-SEP}" stroke="${GANTT_C.today}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.75"/>`;
+    o += `<text x="${tx+3}" y="${HDR_H-7}" font-size="9" fill="${GANTT_C.today}" font-weight="700">TODAY</text>`;
+  }
+  o += `<line x1="${LABEL_W}" y1="${HDR_H}" x2="${LABEL_W}" y2="${curY-SEP}" stroke="#ccc" stroke-width="1"/>`;
+  o += '</svg>';
+  return o;
+}
+
+function buildLegend(r) {
+  const items = [
+    ['Artwork','#93c5fd'],
+    ['Packaging → Vitaquest','#3b82f6'],
+    ['Corrugate → 3PL','#f59e0b'],
+  ];
+  if (r?.mfgTrack) {
+    items.push(['Supplement Mfg','#0891b2'],['Testing (Pre + In-Bottle)','#0e7490']);
+  } else {
+    items.push(['Vitaquest Mfg','#0891b2']);
+  }
+  items.push(['3PL Transit','#64748b'],['Launch ◆','#e74c3c']);
+  return `<div class="gantt-legend">${items.map(([l,c])=>`<div class="leg-item"><div class="leg-sw" style="background:${c}"></div>${l}</div>`).join('')}</div>`;
+}
+</script>
+</body>
+</html>
