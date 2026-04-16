@@ -160,7 +160,7 @@
     <div class="card-body">
       <div class="input-row">
         <div class="field"><label>SKU Name</label>
-          <select id="skuName">
+          <select id="skuName" onchange="prefillLaunchDate(this,'launchDate')">
             <option value="">— Select SKU —</option>
             <option>Metabolic</option>
             <option>Vitality</option>
@@ -240,7 +240,7 @@
     <div class="card-body">
       <div class="input-row">
         <div class="field"><label>SKU Name</label>
-          <select id="addSkuName">
+          <select id="addSkuName" onchange="prefillLaunchDate(this,'addLaunchDate')">
             <option value="">— Select SKU —</option>
             <option>Metabolic</option>
             <option>Vitality</option>
@@ -342,6 +342,19 @@ function toggleMfg(panel) {
   const enabled = document.getElementById(s ? 'mfgEnabled' : 'portMfgEnabled').checked;
   const el = document.getElementById(s ? 'mfgOptions' : 'portMfgOptions');
   el.classList.toggle('hidden', !enabled);
+}
+
+// ══════════════════════════════════════════
+//  SKU launch date presets
+// ══════════════════════════════════════════
+const SKU_LAUNCH_DATES = {
+  'Metabolic':            '2026-06-01',
+  'Vitality':             '2026-07-01',
+};
+function prefillLaunchDate(sel, targetId) {
+  const date = SKU_LAUNCH_DATES[sel.value];
+  const input = document.getElementById(targetId);
+  if (date && !input.value) input.value = date;
 }
 
 // ══════════════════════════════════════════
