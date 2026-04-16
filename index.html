@@ -84,7 +84,8 @@
     .ms { background: #fff; padding: 12px 15px; }
     .ms-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #999; letter-spacing: 0.4px; margin-bottom: 4px; }
     .ms-date { font-size: 16px; font-weight: 700; color: #1a1a2e; }
-    .ms-note { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .ms-note { display: none; }
+    .ms { cursor: default; }
     .ms.green { background: #f0faf5; } .ms.green .ms-date { color: #27ae60; }
     .ms.amber { background: #fffbf0; } .ms.amber .ms-date { color: #e67e22; }
     .ms.red   { background: #fff5f5; } .ms.red .ms-date   { color: #e74c3c; }
@@ -598,14 +599,14 @@ function calculateSingle() {
         </div>
         <div class="ms-grid">
           ${c.artworkDoneDate
-            ? `<div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 weeks before artwork due</div></div>
-          <div class="ms"><div class="ms-label">Artwork Sent ✓</div><div class="ms-date">${fmt(c.artworkDoneDate,true)}</div><div class="ms-note">Sent to ${vendorLabel||'vendor'} · <span style="cursor:pointer;color:#aaa;text-decoration:underline;" onclick="markArtworkDone('single',${i},null);calculateSingle()">undo</span></div></div>`
-            : `<div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 weeks before artwork due</div></div>
-          <div class="ms ${artCls}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div><div class="ms-note">Sent to ${vendorLabel||'vendor'}${c.daysUntilArtwork>=0?' — '+c.daysUntilArtwork+'d from today':' — OVERDUE'}</div></div>`
+            ? `<div class="ms" title="~5 weeks before artwork due"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div></div>
+          <div class="ms" title="Sent to ${vendorLabel||'vendor'}"><div class="ms-label">Artwork Sent ✓</div><div class="ms-date">${fmt(c.artworkDoneDate,true)}</div><div style="font-size:10px;margin-top:4px;"><span style="cursor:pointer;color:#bbb;text-decoration:underline;" onclick="markArtworkDone('single',${i},null);calculateSingle()">undo</span></div></div>`
+            : `<div class="ms" title="~5 weeks before artwork due"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div></div>
+          <div class="ms ${artCls}" title="Send to ${vendorLabel||'vendor'}${c.daysUntilArtwork>=0?' — '+c.daysUntilArtwork+'d from today':' — OVERDUE'}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div></div>`
           }
-          <div class="ms"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div><div class="ms-note">${prodNote}</div></div>
-          <div class="ms"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div><div class="ms-note">${arriveNote}</div></div>
-          ${c.confirmedEta ? (()=>{ const d=Math.round((c.confirmedEta-c.arrives)/86400000); return `<div class="ms ${d>0?'red':'green'}"><div class="ms-label">Vendor ETA 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div><div class="ms-note">${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}</div></div>`; })() : ''}
+          <div class="ms" title="${prodNote}"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div></div>
+          <div class="ms" title="${arriveNote}"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div></div>
+          ${c.confirmedEta ? (()=>{ const d=Math.round((c.confirmedEta-c.arrives)/86400000); return `<div class="ms ${d>0?'red':'green'}" title="${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}"><div class="ms-label">Vendor ETA 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div></div>`; })() : ''}
         </div>
       </div>`;
   }).join('');
@@ -623,12 +624,12 @@ function calculateSingle() {
           Vitaquest Supplement Manufacturing
         </div>
         <div class="ms-grid">
-          <div class="ms"><div class="ms-label">Mfg Start</div><div class="ms-date">${fmt(t.suppMfgStart,true)}</div><div class="ms-note">Same date as print-ready artwork — concurrent</div></div>
-          <div class="ms"><div class="ms-label">Supplement Mfg Complete</div><div class="ms-date">${fmt(t.suppMfgComplete,true)}</div><div class="ms-note">Pre-bottling testing begins</div></div>
-          <div class="ms"><div class="ms-label">Pre-Bottling Test (${t.preBottleWks} wk${t.preBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.preBottleStart)} → ${fmt(t.preBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalPreBottle?' + external lab (2 weeks)':''}</div></div>
-          <div class="ms"><div class="ms-label">Fill / Seal</div><div class="ms-date">${fmt(t.fillSealStart,true)}</div><div class="ms-note">Tested supplement + bags both required</div></div>
-          <div class="ms"><div class="ms-label">In-Bottle Test (${t.inBottleWks} wk${t.inBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.inBottleStart)} → ${fmt(t.inBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalInBottle?' + external lab (2 weeks)':''}</div></div>
-          <div class="ms"><div class="ms-label">Ships to 3PL</div><div class="ms-date">${fmt(r.shipTo3PL,true)}</div><div class="ms-note">After in-bottle testing complete</div></div>
+          <div class="ms" title="Same date as print-ready artwork — concurrent"><div class="ms-label">Mfg Start</div><div class="ms-date">${fmt(t.suppMfgStart,true)}</div></div>
+          <div class="ms" title="Pre-bottling testing begins"><div class="ms-label">Supplement Mfg Complete</div><div class="ms-date">${fmt(t.suppMfgComplete,true)}</div></div>
+          <div class="ms" title="VQ required (1 wk)${t.externalPreBottle?' + external lab (2 weeks)':''}"><div class="ms-label">Pre-Bottling Test (${t.preBottleWks} wk${t.preBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.preBottleStart)} → ${fmt(t.preBottleComplete)}</div></div>
+          <div class="ms" title="Tested supplement + bags both required"><div class="ms-label">Fill / Seal</div><div class="ms-date">${fmt(t.fillSealStart,true)}</div></div>
+          <div class="ms" title="VQ required (1 wk)${t.externalInBottle?' + external lab (2 weeks)':''}"><div class="ms-label">In-Bottle Test (${t.inBottleWks} wk${t.inBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.inBottleStart)} → ${fmt(t.inBottleComplete)}</div></div>
+          <div class="ms" title="After in-bottle testing complete"><div class="ms-label">Ships to 3PL</div><div class="ms-date">${fmt(r.shipTo3PL,true)}</div></div>
         </div>
       </div>`;
   }
@@ -924,13 +925,13 @@ function buildActiveCompSections(r) {
     const is3pl       = c.deliverTo === '3pl';
     const arriveLabel = is3pl ? 'Arrives at 3PL' : 'Arrives at Vitaquest';
     const artworkTiles = c.artworkDoneDate
-      ? `<div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 weeks before artwork due</div></div>
-         <div class="ms"><div class="ms-label">Artwork Sent ✓</div><div class="ms-date">${fmt(c.artworkDoneDate,true)}</div><div class="ms-note">Sent to ${vendorLabel}</div></div>`
-      : `<div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 weeks before artwork due</div></div>
-         <div class="ms"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div><div class="ms-note">Send to ${vendorLabel}</div></div>`;
+      ? `<div class="ms" title="~5 weeks before artwork due"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div></div>
+         <div class="ms" title="Sent to ${vendorLabel}"><div class="ms-label">Artwork Sent ✓</div><div class="ms-date">${fmt(c.artworkDoneDate,true)}</div></div>`
+      : `<div class="ms" title="~5 weeks before artwork due"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div></div>
+         <div class="ms" title="Send to ${vendorLabel}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div></div>`;
     const etaTile = c.confirmedEta ? (()=>{
       const d = Math.round((c.confirmedEta - c.arrives) / 86400000);
-      return `<div class="ms ${d>0?'red':'green'}"><div class="ms-label">Vendor ETA 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div><div class="ms-note">${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}</div></div>`;
+      return `<div class="ms ${d>0?'red':'green'}" title="${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}"><div class="ms-label">Vendor ETA 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div></div>`;
     })() : '';
     return `<div class="comp-section">
       <div class="comp-section-head">
@@ -940,7 +941,7 @@ function buildActiveCompSections(r) {
       </div>
       <div class="ms-grid">
         ${artworkTiles}
-        <div class="ms"><div class="ms-label">${vendorLabel} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div><div class="ms-note">${c.weeks} wks lead time</div></div>
+        <div class="ms" title="${c.weeks} wks lead time"><div class="ms-label">${vendorLabel} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div></div>
         <div class="ms"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div></div>
         ${etaTile}
       </div>
