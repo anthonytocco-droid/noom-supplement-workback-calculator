@@ -132,7 +132,7 @@
         <div><strong style="font-size:11px;text-transform:uppercase;letter-spacing:0.4px;color:#556;">→ Vitaquest</strong>
           <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
             <span class="tag">Gusset Bag — 5 wks (Stephen Gould)</span>
-            <span class="tag">Supplement Mfg — 6–8 wks (concurrent with packaging)</span>
+            <span class="tag">Supplement Mfg — 6–8 weeks (concurrent with packaging)</span>
             <span class="tag">Pre-bottling test — 1 wk req. + 2 wks ext. optional</span>
             <span class="tag">In-bottle test — 1 wk req. + 2 wks ext. optional</span>
           </div>
@@ -156,7 +156,7 @@
   <div class="card">
     <div class="card-head">Calculate Workback for a SKU</div>
     <div class="card-body">
-      <div class="input-row">
+      <div class="input-row" style="align-items:flex-end;">
         <div class="field"><label>SKU Name</label>
           <select id="skuName" onchange="prefillLaunchDate(this,'launchDate')">
             <option value="">— Select SKU —</option>
@@ -172,16 +172,20 @@
           </select>
         </div>
         <div class="field"><label>Launch Date</label><input type="date" id="launchDate" /></div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#555;font-weight:600;padding-bottom:9px;">
+          <input type="checkbox" id="multiSkuMode" onchange="toggleMultiSku()" style="width:15px;height:15px;cursor:pointer;accent-color:#1a1a2e;" />
+          Add multiple SKUs
+        </label>
       </div>
       <!-- Packaging -->
       <div class="comp-builder">
         <div class="comp-builder-title">Packaging Components</div>
         <div class="preset-btns">
-          <button class="preset-btn" onclick="addPreset('single','Gusset Bag',5,'Stephen Gould','vitaquest')">+ Gusset Bag (5 wks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Shrink Wrap Jar',4,'Stephen Gould','3pl')">+ Shrink Wrap Jar (4 wks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Corrugate Outer Shipper',4,'','3pl')">+ Outer Shipper (4 wks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Marketing Postcard',2,'','3pl')">+ Postcard (2 wks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Marketing Booklet',4,'','3pl')">+ Booklet (4 wks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Gusset Bag',5,'Stephen Gould','vitaquest')">+ Gusset Bag (5 weeks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Shrink Wrap Jar',4,'Stephen Gould','3pl')">+ Shrink Wrap Jar (4 weeks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Corrugate Outer Shipper',4,'','3pl')">+ Outer Shipper (4 weeks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Marketing Postcard',2,'','3pl')">+ Postcard (2 weeks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Marketing Booklet',4,'','3pl')">+ Booklet (4 weeks)</button>
         </div>
         <div style="font-size:11px;color:#999;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;">Selected Components</div>
         <div class="selected-comps" id="singleComps"></div>
@@ -195,32 +199,26 @@
         <div class="mfg-options" id="mfgOptions">
           <div class="mfg-row">
             <div class="field">
-              <label>Mfg Lead Time (wks)</label>
+              <label>Mfg Lead Time (weeks)</label>
               <input type="number" id="mfgWeeks" value="7" min="1" max="52" style="min-width:0;width:80px;" />
             </div>
-            <div style="font-size:12px;color:#059669;align-self:flex-end;padding-bottom:10px;">Range: 6–8 wks · Concurrent with packaging production</div>
+            <div style="font-size:12px;color:#059669;align-self:flex-end;padding-bottom:10px;">Range: 6–8 weeks · Concurrent with packaging production</div>
           </div>
           <div class="test-grid">
             <div class="test-section">
               <div class="test-title">Pre-Bottling 3rd Party Testing</div>
-              <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 wk</div>
-              <div class="test-row opt"><label><input type="checkbox" id="extPreBottle" /><span class="opt-badge">Optional</span> External lab — +2 wks</label></div>
+              <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 week</div>
+              <div class="test-row opt"><label><input type="checkbox" id="extPreBottle" /><span class="opt-badge">Optional</span> External lab — +2 weeks</label></div>
             </div>
             <div class="test-section">
               <div class="test-title">In-Bottle 3rd Party Testing</div>
-              <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 wk</div>
-              <div class="test-row opt"><label><input type="checkbox" id="extInBottle" /><span class="opt-badge">Optional</span> External lab — +2 wks</label></div>
+              <div class="test-row"><span class="req-badge">Required</span> Vitaquest — 1 week</div>
+              <div class="test-row opt"><label><input type="checkbox" id="extInBottle" /><span class="opt-badge">Optional</span> External lab — +2 weeks</label></div>
             </div>
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:4px;">
-        <button class="btn btn-primary" onclick="calculateSingle()">Calculate</button>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#555;font-weight:600;">
-          <input type="checkbox" id="multiSkuMode" onchange="toggleMultiSku()" style="width:15px;height:15px;cursor:pointer;accent-color:#1a1a2e;" />
-          Add multiple SKUs
-        </label>
-      </div>
+      <button class="btn btn-primary" onclick="calculateSingle()">Calculate</button>
       <div id="portfolioPanel" style="display:none;margin-top:14px;border-top:1px solid #eee;padding-top:14px;">
         <div id="portfolioList" style="margin-bottom:10px;min-height:28px;font-size:12px;color:#bbb;">No SKUs added yet</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -328,7 +326,7 @@ function renderChips(panel) {
     const etaPart = c.confirmedEta
       ? `<span style="background:#dcfce7;color:#166534;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:600;cursor:pointer;margin-left:2px;" onclick="clearEta('${panel}',${i})" title="Click to clear ETA">🔒 ${fmt(new Date(c.confirmedEta+'T12:00:00'))}</span>`
       : `<input type="date" onchange="setEta('${panel}',${i},this.value)" style="border:1px dashed #b0c8e8;border-radius:3px;padding:1px 3px;font-size:10px;color:#666;background:#f4f8ff;width:90px;margin-left:2px;" title="Vendor confirmed ETA (optional)" />`;
-    return `<div class="comp-chip">${c.name}<span class="chip-wks">(${c.weeks}wk${c.vendor?' · '+c.vendor:''})</span>${dst}${etaPart}<button onclick="removeComp('${panel}',${i})">×</button></div>`;
+    return `<div class="comp-chip">${c.name}<span class="chip-wks">(${c.weeks} week${c.weeks!==1?'s':''}${c.vendor?' · '+c.vendor:''})</span>${dst}${etaPart}<button onclick="removeComp('${panel}',${i})">×</button></div>`;
   }).join('');
 }
 
@@ -625,7 +623,7 @@ function calculateSingle() {
         <div class="ms-grid">
           ${c.artworkDoneDate
             ? `<div class="ms green"><div class="ms-label">Artwork Completed ✓</div><div class="ms-date">${fmt(c.artworkDoneDate,true)}</div><div class="ms-note">Actual date · <span style="cursor:pointer;color:#aaa;text-decoration:underline;" onclick="markArtworkDone('single',${i},null);calculateSingle()">undo</span></div></div>`
-            : `<div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 wks before artwork due</div></div>
+            : `<div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 weeks before artwork due</div></div>
           <div class="ms ${artCls}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div><div class="ms-note">Sent to ${vendorLabel||'vendor'}${c.daysUntilArtwork>=0?' — '+c.daysUntilArtwork+'d from today':' — OVERDUE'}<br/><input type="date" style="margin-top:5px;border:1px solid #e2e8f0;border-radius:3px;padding:2px 4px;font-size:10px;color:#444;background:#f8fafc;width:100%;" onchange="markArtworkDone('single',${i},this.value);calculateSingle()" title="Mark artwork as completed" /></div></div>`
           }
           <div class="ms"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div><div class="ms-note">${prodNote}</div></div>
@@ -651,9 +649,9 @@ function calculateSingle() {
         <div class="ms-grid">
           <div class="ms"><div class="ms-label">Mfg Start</div><div class="ms-date">${fmt(t.suppMfgStart,true)}</div><div class="ms-note">Same date as print-ready artwork — concurrent</div></div>
           <div class="ms"><div class="ms-label">Supplement Mfg Complete</div><div class="ms-date">${fmt(t.suppMfgComplete,true)}</div><div class="ms-note">Pre-bottling testing begins</div></div>
-          <div class="ms ${msClass(dPreBottle)}"><div class="ms-label">Pre-Bottling Test (${t.preBottleWks} wk${t.preBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.preBottleStart)} → ${fmt(t.preBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalPreBottle?' + external lab (2 wks)':''}</div></div>
+          <div class="ms ${msClass(dPreBottle)}"><div class="ms-label">Pre-Bottling Test (${t.preBottleWks} wk${t.preBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.preBottleStart)} → ${fmt(t.preBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalPreBottle?' + external lab (2 weeks)':''}</div></div>
           <div class="ms green"><div class="ms-label">Fill / Seal</div><div class="ms-date">${fmt(t.fillSealStart,true)}</div><div class="ms-note">Tested supplement + bags both required</div></div>
-          <div class="ms ${msClass(dInBottle)}"><div class="ms-label">In-Bottle Test (${t.inBottleWks} wk${t.inBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.inBottleStart)} → ${fmt(t.inBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalInBottle?' + external lab (2 wks)':''}</div></div>
+          <div class="ms ${msClass(dInBottle)}"><div class="ms-label">In-Bottle Test (${t.inBottleWks} wk${t.inBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.inBottleStart)} → ${fmt(t.inBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalInBottle?' + external lab (2 weeks)':''}</div></div>
           <div class="ms green"><div class="ms-label">Ships to 3PL</div><div class="ms-date">${fmt(r.shipTo3PL,true)}</div><div class="ms-note">After in-bottle testing complete</div></div>
         </div>
       </div>`;
@@ -732,7 +730,7 @@ function renderPortfolio() {
       const mfgCell = r.mfgTrack ? `${fmt(r.mfgTrack.suppMfgStart)} → ${fmt(r.mfgTrack.inBottleComplete)}` : '—';
       return `<tr>
         <td>${i===0?`<strong>${name}</strong>`:''}</td>
-        <td><span style="color:${c.deliverTo==='3pl'?'#b45309':'#1d4ed8'};font-weight:600">${c.name}</span><span class="comp-sub"> ${c.weeks}wk${c.vendor?' · '+c.vendor:''}</span></td>
+        <td><span style="color:${c.deliverTo==='3pl'?'#b45309':'#1d4ed8'};font-weight:600">${c.name}</span><span class="comp-sub"> ${c.weeks} week${c.weeks!==1?'s':''}${c.vendor?' · '+c.vendor:''}</span></td>
         <td ${artCls}>${fmt(c.printReady)}</td>
         <td ${arrCls}>${fmt(c.arrives)}</td>
         ${i===0?`<td rowspan="${r.components.length}" style="vertical-align:middle;font-size:12px;">${mfgCell}</td>
