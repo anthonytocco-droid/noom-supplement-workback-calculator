@@ -924,8 +924,11 @@ function renderActiveLaunches() {
   }).join('');
 
   el.innerHTML = `<div style="margin-top:0;margin-bottom:0;">
-    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin:24px 0 12px 2px;">Active Launch Status</div>
-    ${cards}
+    <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.als-arrow').textContent=this.nextElementSibling.style.display==='none'?'▶':'▼';"
+      style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin:24px 0 12px 2px;">
+      <span class="als-arrow">▶</span> Active Launch Status
+    </div>
+    <div style="display:none;">${cards}</div>
   </div>`;
 }
 
