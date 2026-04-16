@@ -581,48 +581,7 @@ function buildSnapshot(name, r) {
       '</div>'+(i < phases.length-1 ? '<div style="color:#cbd5e1;font-size:14px;align-self:center;flex-shrink:0;padding:0 3px;">›</div>' : '');
   }).join('');
 
-  var details = [];
-  r.components.forEach(function(c) {
-    if (t >= c.designStart && t < c.printReady) {
-      details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#eff6ff;border-left:3px solid #93c5fd;border-radius:0 6px 6px 0;">'+
-        '<div style="flex:1;font-size:12px;"><strong>'+c.name+'</strong> — artwork due <strong>'+fmt(c.printReady,true)+'</strong></div>'+
-        '<div style="font-size:11px;font-weight:700;color:'+(c.daysUntilArtwork<=7?'#e74c3c':c.daysUntilArtwork<=14?'#e67e22':'#555')+';">'+
-        (c.daysUntilArtwork===0?'DUE TODAY':c.daysUntilArtwork+'d left')+'</div></div>');
-    } else if (t >= c.printReady && t <= c.arrives) {
-      var etaNote = c.confirmedEta
-        ? ' · ETA: <strong>'+fmt(c.confirmedEta,true)+'</strong>'+(c.etaDelta>0?' <span style="color:#e74c3c">⚠ '+c.etaDelta+'d late</span>':c.etaDelta<0?' <span style="color:#27ae60">✓ '+Math.abs(c.etaDelta)+'d early</span>':' <span style="color:#27ae60">✓ on time</span>')
-        : '';
-      details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#f0f7ff;border-left:3px solid '+(c.deliverTo==='3pl'?'#f59e0b':'#3b82f6')+';border-radius:0 6px 6px 0;">'+
-        '<div style="flex:1;font-size:12px;"><strong>'+c.name+'</strong> in production'+(c.vendor?' at '+c.vendor:'')+etaNote+'</div>'+
-        '<div style="font-size:11px;color:#555;">need by '+fmt(c.arrives,true)+' · '+c.daysUntilArrives+'d left</div></div>');
-    }
-  });
-  if (r.mfgTrack) {
-    var m = r.mfgTrack;
-    if (t >= m.suppMfgStart && t < m.preBottleStart) {
-      details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#f0fdfa;border-left:3px solid #0891b2;border-radius:0 6px 6px 0;">'+
-        '<div style="flex:1;font-size:12px;"><strong>Supplement Manufacturing</strong> at Vitaquest</div>'+
-        '<div style="font-size:11px;color:#555;">complete '+fmt(m.suppMfgComplete,true)+' · '+diffDays(m.suppMfgComplete,t)+'d left</div></div>');
-    }
-    if (t >= m.preBottleStart && t <= m.preBottleComplete) {
-      details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#f0fdfa;border-left:3px solid #0e7490;border-radius:0 6px 6px 0;">'+
-        '<div style="flex:1;font-size:12px;"><strong>Pre-Bottle Testing</strong></div>'+
-        '<div style="font-size:11px;color:#555;">complete '+fmt(m.preBottleComplete,true)+' · '+diffDays(m.preBottleComplete,t)+'d left</div></div>');
-    }
-    if (t >= m.inBottleStart && t <= m.inBottleComplete) {
-      details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#f0fdfa;border-left:3px solid #0e7490;border-radius:0 6px 6px 0;">'+
-        '<div style="flex:1;font-size:12px;"><strong>In-Bottle Testing</strong></div>'+
-        '<div style="font-size:11px;color:#555;">complete '+fmt(m.inBottleComplete,true)+' · '+diffDays(m.inBottleComplete,t)+'d left</div></div>');
-    }
-  }
-  if (t >= r.shipTo3PL && t < r.launch) {
-    details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#f0faf5;border-left:3px solid #27ae60;border-radius:0 6px 6px 0;">'+
-      '<div style="flex:1;font-size:12px;"><strong>Fulfillment</strong> — in transit / at 3PL</div>'+
-      '<div style="font-size:11px;color:#555;">launch '+fmt(r.launch,true)+' · '+r.daysToLaunch+'d left</div></div>');
-  }
-  var activeDetailHTML = (!isLaunched && details.length)
-    ? '<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#888;margin-bottom:3px;">Active Now</div>'+details.join('')+'</div>'
-    : '';
+  var activeDetailHTML = '';
 
   var milestones = [];
   r.components.forEach(function(c) {
