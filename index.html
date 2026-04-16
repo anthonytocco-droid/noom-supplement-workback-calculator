@@ -88,8 +88,6 @@
     .ms.green { background: #f0faf5; } .ms.green .ms-date { color: #27ae60; }
     .ms.amber { background: #fffbf0; } .ms.amber .ms-date { color: #e67e22; }
     .ms.red   { background: #fff5f5; } .ms.red .ms-date   { color: #e74c3c; }
-    .ms.teal  { background: #f0fdfa; } .ms.teal .ms-date  { color: #0891b2; }
-    .ms.purple{ background: #f5f0ff; } .ms.purple .ms-date{ color: #7c3aed; font-size: 13px; }
 
     .parallel-note { background: #f5f9ff; border-top: 1px solid #e0eaff; padding: 10px 18px; font-size: 12px; color: #446; }
 
@@ -363,7 +361,7 @@ const comps = { single: [], port: [] };
 
 function addPreset(panel, name, weeks, vendor='', deliverTo='vitaquest') {
   if (comps[panel].some(c => c.name === name)) return;
-  comps[panel].push({ name, weeks, vendor, deliverTo, confirmedEta: null });
+  comps[panel].push({ name, weeks, vendor, deliverTo, confirmedEta: null, artworkDoneDate: null });
   renderChips(panel);
 }
 function addCustom(panel) {
@@ -374,7 +372,7 @@ function addCustom(panel) {
   const w = parseInt(document.getElementById(s ? 'customWks' : 'portCustomWks').value);
   if (!n) { alert('Enter a component name.'); return; }
   if (!w||w<1) { alert('Enter a valid lead time.'); return; }
-  comps[panel].push({ name:n, weeks:w, vendor:v, deliverTo:d, confirmedEta:null });
+  comps[panel].push({ name:n, weeks:w, vendor:v, deliverTo:d, confirmedEta:null, artworkDoneDate:null });
   renderChips(panel);
   ['Name','Vendor','Wks'].forEach(f => {
     const el = document.getElementById((s?'custom':'portCustom')+f);
@@ -384,6 +382,7 @@ function addCustom(panel) {
 function removeComp(panel, idx) { comps[panel].splice(idx,1); renderChips(panel); }
 function setEta(panel, idx, val)  { comps[panel][idx].confirmedEta = val || null; renderChips(panel); }
 function clearEta(panel, idx)     { comps[panel][idx].confirmedEta = null; renderChips(panel); }
+function markArtworkDone(panel, idx, dateStr) { comps[panel][idx].artworkDoneDate = dateStr || null; }
 function renderChips(panel) {
   const el = document.getElementById(panel==='single'?'singleComps':'portComps');
   el.innerHTML = comps[panel].map((c,i) => {
@@ -465,18 +464,20 @@ function workback(launchDateStr, components, mfg={enabled:false}) {
   }
 
   // Packaging component timelines
-  const compTimelines = components.map(({name, weeks, vendor, deliverTo, confirmedEta}) => {
+  const compTimelines = components.map(({name, weeks, vendor, deliverTo, confirmedEta, artworkDoneDate}) => {
     const dest    = deliverTo || 'vitaquest';
     const arrives = dest === '3pl' ? subWeeks(launch, 1) : new Date(arrivedByVQ);
     const printReady  = subWeeks(arrives, weeks);
     const designStart = subWeeks(printReady, 5);
-    const etaDate = confirmedEta ? new Date(confirmedEta + 'T12:00:00') : null;
+    const etaDate  = confirmedEta    ? new Date(confirmedEta    + 'T12:00:00') : null;
+    const artDone  = artworkDoneDate ? new Date(artworkDoneDate + 'T12:00:00') : null;
     return {
       name, weeks, vendor, deliverTo: dest, arrives, printReady, designStart,
       daysUntilArtwork: diffDays(printReady, today()),
       daysUntilArrives: diffDays(arrives, today()),
       confirmedEta: etaDate,
       etaDelta: etaDate ? diffDays(etaDate, arrives) : null,
+      artworkDoneDate: artDone,
     };
   });
 
@@ -512,12 +513,12 @@ function statusPill(d) {
 // ══════════════════════════════════════════
 // Simplified 3-hue palette
 const GANTT_C = {
-  artwork:  '#93c5fd',  // light blue  — artwork / design phase
-  pkgVQ:    '#3b82f6',  // blue        — VQ-bound packaging production
-  pkg3PL:   '#f59e0b',  // amber       — 3PL-bound (corrugate)
-  mfg:      '#0891b2',  // teal        — supplement manufacturing
-  test:     '#0e7490',  // dark teal   — pre-bottle & in-bottle testing
-  transit:  '#64748b',  // slate       — 3PL transit
+  artwork:  '#bfdbfe',  // light blue  — artwork phase
+  pkgVQ:    '#3b82f6',  // blue        — packaging production (all destinations)
+  pkg3PL:   '#3b82f6',  // blue        — same as VQ; destination shown via label
+  mfg:      '#0891b2',  // teal        — supplement mfg + testing (single color)
+  test:     '#0891b2',  // teal        — same as mfg
+  transit:  '#94a3b8',  // gray        — 3PL transit
   launch:   '#e74c3c',  // red         — launch marker & today line
   today:    '#e74c3c',
   grid:     '#e8eaf0',
@@ -598,7 +599,7 @@ function buildSnapshot(name, r) {
   milestones.sort(function(a,b){return a.days-b.days;});
   var nextMs = milestones[0] || null;
 
-  var overdueArt = r.components.filter(function(c){return c.daysUntilArtwork<0;});
+  var overdueArt = r.components.filter(function(c){return c.daysUntilArtwork<0 && !c.artworkDoneDate;});
   var badge, badgeColor;
   if (isLaunched)              { badge='Launched';         badgeColor='#27ae60'; }
   else if (overdueArt.length)  { badge='Action Required'; badgeColor='#e74c3c'; }
@@ -654,9 +655,9 @@ function calculateSingle() {
   // Alerts
   const alerts = [];
   r.components.forEach(c => {
-    if (c.daysUntilArtwork < 0)
+    if (!c.artworkDoneDate && c.daysUntilArtwork < 0)
       alerts.push(`<strong>OVERDUE — ${c.name}:</strong> Artwork due was ${fmt(c.printReady)} (${Math.abs(c.daysUntilArtwork)} days ago).`);
-    else if (c.daysUntilArtwork <= 14)
+    else if (!c.artworkDoneDate && c.daysUntilArtwork <= 14)
       alerts.push(`<strong>URGENT — ${c.name}:</strong> Artwork due in ${c.daysUntilArtwork} days (${fmt(c.printReady)}).`);
     const dest = c.deliverTo === '3pl' ? 'The Pharmacy Hub' : 'Vitaquest';
     if (c.daysUntilArrives >= 0 && c.daysUntilArrives <= 14)
@@ -666,7 +667,7 @@ function calculateSingle() {
 
   // Packaging component sections
   const compSections = r.components.map((c,i) => {
-    const color       = c.deliverTo === '3pl' ? '#f59e0b' : '#3b82f6';
+    const color       = '#3b82f6';
     const vendorLabel = c.vendor || 'Vendor';
     const is3pl       = c.deliverTo === '3pl';
     const artCls      = msClass(c.daysUntilArtwork);
@@ -686,9 +687,12 @@ function calculateSingle() {
           ${c===r.critical?'<span style="background:#fde8e8;color:#e74c3c;border-radius:4px;padding:2px 7px;font-size:10px;">CRITICAL PATH</span>':''}
         </div>
         <div class="ms-grid">
-          <div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 wks before artwork due</div></div>
-          <div class="ms ${artCls}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div><div class="ms-note">Sent to ${vendorLabel||'vendor'}${c.daysUntilArtwork>=0?' — '+c.daysUntilArtwork+'d from today':' — OVERDUE'}</div></div>
-          <div class="ms purple"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div><div class="ms-note">${prodNote}</div></div>
+          ${c.artworkDoneDate
+            ? `<div class="ms green"><div class="ms-label">Artwork Completed ✓</div><div class="ms-date">${fmt(c.artworkDoneDate,true)}</div><div class="ms-note">Actual date · <span style="cursor:pointer;color:#aaa;text-decoration:underline;" onclick="markArtworkDone('single',${i},null);calculateSingle()">undo</span></div></div>`
+            : `<div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 wks before artwork due</div></div>
+          <div class="ms ${artCls}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div><div class="ms-note">Sent to ${vendorLabel||'vendor'}${c.daysUntilArtwork>=0?' — '+c.daysUntilArtwork+'d from today':' — OVERDUE'}<br/><input type="date" style="margin-top:5px;border:1px solid #e2e8f0;border-radius:3px;padding:2px 4px;font-size:10px;color:#444;background:#f8fafc;width:100%;" onchange="markArtworkDone('single',${i},this.value);calculateSingle()" title="Mark artwork as completed" /></div></div>`
+          }
+          <div class="ms"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div><div class="ms-note">${prodNote}</div></div>
           <div class="ms ${msClass(c.daysUntilArrives)}"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div><div class="ms-note">${arriveNote}</div></div>
           ${c.confirmedEta ? `<div class="ms ${c.etaDelta > 0 ? 'red' : 'green'}"><div class="ms-label">Vendor ETA 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div><div class="ms-note">${c.etaDelta > 0 ? '⚠ '+c.etaDelta+'d late vs. need-by' : c.etaDelta < 0 ? '✓ '+Math.abs(c.etaDelta)+'d early' : '✓ On schedule'}</div></div>` : ''}
         </div>
@@ -709,8 +713,8 @@ function calculateSingle() {
           <span style="background:#e0f7f7;color:#0e7490;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">${t.mfgWks} wks — concurrent with packaging</span>
         </div>
         <div class="ms-grid">
-          <div class="ms teal"><div class="ms-label">Mfg Start</div><div class="ms-date">${fmt(t.suppMfgStart,true)}</div><div class="ms-note">Same date as print-ready artwork — concurrent</div></div>
-          <div class="ms teal"><div class="ms-label">Supplement Mfg Complete</div><div class="ms-date">${fmt(t.suppMfgComplete,true)}</div><div class="ms-note">Pre-bottling testing begins</div></div>
+          <div class="ms"><div class="ms-label">Mfg Start</div><div class="ms-date">${fmt(t.suppMfgStart,true)}</div><div class="ms-note">Same date as print-ready artwork — concurrent</div></div>
+          <div class="ms"><div class="ms-label">Supplement Mfg Complete</div><div class="ms-date">${fmt(t.suppMfgComplete,true)}</div><div class="ms-note">Pre-bottling testing begins</div></div>
           <div class="ms ${msClass(dPreBottle)}"><div class="ms-label">Pre-Bottling Test (${t.preBottleWks} wk${t.preBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.preBottleStart)} → ${fmt(t.preBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalPreBottle?' + external lab (2 wks)':''}</div></div>
           <div class="ms green"><div class="ms-label">Fill / Seal</div><div class="ms-date">${fmt(t.fillSealStart,true)}</div><div class="ms-note">Tested supplement + bags both required</div></div>
           <div class="ms ${msClass(dInBottle)}"><div class="ms-label">In-Bottle Test (${t.inBottleWks} wk${t.inBottleWks>1?'s':''})</div><div class="ms-date">${fmt(t.inBottleStart)} → ${fmt(t.inBottleComplete)}</div><div class="ms-note">VQ required (1 wk)${t.externalInBottle?' + external lab (2 wks)':''}</div></div>
@@ -736,7 +740,7 @@ function calculateSingle() {
         ${r.mfgTrack ? `<strong>Mfg track:</strong> supplement mfg starts ${fmt(r.mfgTrack.suppMfgStart)} (concurrent), fill/seal ${fmt(r.mfgTrack.fillSealStart)}.` : ''}
       </div>
       <div class="gantt-title">Gantt Chart</div>
-      <div class="gantt-subtitle">Light blue = Artwork. Blue = Packaging → Vitaquest. Amber = Corrugate → 3PL. Teal = Supplement Mfg + Testing. ◆ = Launch.</div>
+      <div class="gantt-subtitle">Light blue = Artwork. Blue = Packaging. Teal = Supplement Mfg + Testing. Gray = 3PL Transit. ◆ = Launch.</div>
       <div class="gantt-wrap">${ganttSVG}</div>
       ${buildLegend(r)}
     </div>`;
@@ -813,7 +817,7 @@ function renderPortfolio() {
         </tr></thead><tbody>${rows}</tbody></table>
       </div>
       <div class="gantt-title">Portfolio Gantt</div>
-      <div class="gantt-subtitle">Light blue = Artwork. Blue = Packaging → Vitaquest. Amber = Corrugate → 3PL. Teal = Supplement Mfg + Testing. ◆ = Launch.</div>
+      <div class="gantt-subtitle">Light blue = Artwork. Blue = Packaging. Teal = Supplement Mfg + Testing. Gray = 3PL Transit. ◆ = Launch.</div>
       <div class="gantt-wrap">${ganttSVG}</div>
       ${buildLegend(skuList[0]?.r)}
     </div>`;
@@ -873,7 +877,7 @@ function buildGantt(skuList) {
   // Header
   o += `<rect x="0" y="0" width="${SVG_W}" height="${HDR_H}" fill="#1a1a2e"/>`;
   o += `<text x="8" y="24" font-size="11" fill="#aab" font-weight="700">SKU</text>`;
-  const legHdr = [['Artwork','#93c5fd'],['Packaging (VQ)','#3b82f6'],['Corrugate (3PL)','#f59e0b'],['Supplement Mfg','#0891b2'],['Testing','#0e7490'],['3PL Transit','#64748b']];
+  const legHdr = [['Artwork','#bfdbfe'],['Packaging','#3b82f6'],['Supplement Mfg + Testing','#0891b2'],['3PL Transit','#94a3b8']];
   let lx = LABEL_W + 10;
   legHdr.forEach(([lbl,col]) => {
     o += `<rect x="${lx}" y="14" width="11" height="9" rx="2" fill="${col}"/>`;
