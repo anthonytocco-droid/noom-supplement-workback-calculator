@@ -294,8 +294,8 @@ function renderChips(panel) {
       ? '<span style="background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-size:10px;margin-left:3px;">→3PL</span>'
       : '<span style="background:#e0f2fe;color:#0369a1;border-radius:3px;padding:1px 5px;font-size:10px;margin-left:3px;">→VQ</span>';
     const etaPart = c.confirmedEta
-      ? `<span style="background:#dcfce7;color:#166534;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:600;cursor:pointer;margin-left:2px;" onclick="clearEta('${panel}',${i})" title="Click to clear ETA">🔒 ${fmt(new Date(c.confirmedEta+'T12:00:00'))}</span>`
-      : `<input type="date" onchange="setEta('${panel}',${i},this.value)" style="border:1px dashed #b0c8e8;border-radius:3px;padding:1px 3px;font-size:10px;color:#666;background:#f4f8ff;width:90px;margin-left:2px;" title="Vendor confirmed ETA (optional)" />`;
+      ? `<span style="background:#dcfce7;color:#166534;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:600;cursor:pointer;margin-left:4px;" onclick="clearEta('${panel}',${i})" title="Click to clear ETA">ETA ${fmt(new Date(c.confirmedEta+'T12:00:00'))}</span>`
+      : `<span style="font-size:10px;color:#b0c8e8;cursor:pointer;margin-left:4px;" onclick="this.style.display='none';this.nextElementSibling.style.display='inline';" title="Set vendor ETA">+ ETA</span><input type="date" onchange="setEta('${panel}',${i},this.value)" style="display:none;border:1px dashed #b0c8e8;border-radius:3px;padding:1px 3px;font-size:10px;color:#666;background:#f4f8ff;width:90px;margin-left:2px;" />`;
     return `<div class="comp-chip">${c.name}<span class="chip-wks">(${c.weeks} week${c.weeks!==1?'s':''}${c.vendor?' · '+c.vendor:''})</span>${dst}${etaPart}<button onclick="removeComp('${panel}',${i})">×</button></div>`;
   }).join('');
 }
