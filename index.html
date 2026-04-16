@@ -325,7 +325,7 @@ const comps = { single: [], port: [] };
 
 function addPreset(panel, name, weeks, vendor='', deliverTo='vitaquest') {
   if (comps[panel].some(c => c.name === name)) return;
-  comps[panel].push({ name, weeks, vendor, deliverTo });
+  comps[panel].push({ name, weeks, vendor, deliverTo, confirmedEta: null });
   renderChips(panel);
 }
 function addCustom(panel) {
@@ -336,7 +336,7 @@ function addCustom(panel) {
   const w = parseInt(document.getElementById(s ? 'customWks' : 'portCustomWks').value);
   if (!n) { alert('Enter a component name.'); return; }
   if (!w||w<1) { alert('Enter a valid lead time.'); return; }
-  comps[panel].push({ name:n, weeks:w, vendor:v, deliverTo:d });
+  comps[panel].push({ name:n, weeks:w, vendor:v, deliverTo:d, confirmedEta:null });
   renderChips(panel);
   ['Name','Vendor','Wks'].forEach(f => {
     const el = document.getElementById((s?'custom':'portCustom')+f);
@@ -344,13 +344,18 @@ function addCustom(panel) {
   });
 }
 function removeComp(panel, idx) { comps[panel].splice(idx,1); renderChips(panel); }
+function setEta(panel, idx, val)  { comps[panel][idx].confirmedEta = val || null; renderChips(panel); }
+function clearEta(panel, idx)     { comps[panel][idx].confirmedEta = null; renderChips(panel); }
 function renderChips(panel) {
   const el = document.getElementById(panel==='single'?'singleComps':'portComps');
   el.innerHTML = comps[panel].map((c,i) => {
     const dst = c.deliverTo==='3pl'
       ? '<span style="background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-size:10px;margin-left:3px;">→3PL</span>'
       : '<span style="background:#e0f2fe;color:#0369a1;border-radius:3px;padding:1px 5px;font-size:10px;margin-left:3px;">→VQ</span>';
-    return `<div class="comp-chip">${c.name}<span class="chip-wks">(${c.weeks}wk${c.vendor?' · '+c.vendor:''})</span>${dst}<button onclick="removeComp('${panel}',${i})">×</button></div>`;
+    const etaPart = c.confirmedEta
+      ? `<span style="background:#dcfce7;color:#166534;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:600;cursor:pointer;margin-left:2px;" onclick="clearEta('${panel}',${i})" title="Click to clear ETA">🔒 ${fmt(new Date(c.confirmedEta+'T12:00:00'))}</span>`
+      : `<input type="date" onchange="setEta('${panel}',${i},this.value)" style="border:1px dashed #b0c8e8;border-radius:3px;padding:1px 3px;font-size:10px;color:#666;background:#f4f8ff;width:90px;margin-left:2px;" title="Vendor confirmed ETA (optional)" />`;
+    return `<div class="comp-chip">${c.name}<span class="chip-wks">(${c.weeks}wk${c.vendor?' · '+c.vendor:''})</span>${dst}${etaPart}<button onclick="removeComp('${panel}',${i})">×</button></div>`;
   }).join('');
 }
 
@@ -422,15 +427,18 @@ function workback(launchDateStr, components, mfg={enabled:false}) {
   }
 
   // Packaging component timelines
-  const compTimelines = components.map(({name, weeks, vendor, deliverTo}) => {
+  const compTimelines = components.map(({name, weeks, vendor, deliverTo, confirmedEta}) => {
     const dest    = deliverTo || 'vitaquest';
     const arrives = dest === '3pl' ? subWeeks(launch, 1) : new Date(arrivedByVQ);
     const printReady  = subWeeks(arrives, weeks);
     const designStart = subWeeks(printReady, 5);
+    const etaDate = confirmedEta ? new Date(confirmedEta + 'T12:00:00') : null;
     return {
       name, weeks, vendor, deliverTo: dest, arrives, printReady, designStart,
       daysUntilArtwork: diffDays(printReady, today()),
       daysUntilArrives: diffDays(arrives, today()),
+      confirmedEta: etaDate,
+      etaDelta: etaDate ? diffDays(etaDate, arrives) : null,
     };
   });
 
@@ -543,9 +551,12 @@ function buildSnapshot(name, r) {
         '<div style="font-size:11px;font-weight:700;color:'+(c.daysUntilArtwork<=7?'#e74c3c':c.daysUntilArtwork<=14?'#e67e22':'#555')+';">'+
         (c.daysUntilArtwork===0?'DUE TODAY':c.daysUntilArtwork+'d left')+'</div></div>');
     } else if (t >= c.printReady && t <= c.arrives) {
+      var etaNote = c.confirmedEta
+        ? ' · ETA: <strong>'+fmt(c.confirmedEta,true)+'</strong>'+(c.etaDelta>0?' <span style="color:#e74c3c">⚠ '+c.etaDelta+'d late</span>':c.etaDelta<0?' <span style="color:#27ae60">✓ '+Math.abs(c.etaDelta)+'d early</span>':' <span style="color:#27ae60">✓ on time</span>')
+        : '';
       details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#f0f7ff;border-left:3px solid '+(c.deliverTo==='3pl'?'#f59e0b':'#3b82f6')+';border-radius:0 6px 6px 0;">'+
-        '<div style="flex:1;font-size:12px;"><strong>'+c.name+'</strong> in production'+(c.vendor?' at '+c.vendor:'')+'</div>'+
-        '<div style="font-size:11px;color:#555;">arrives '+fmt(c.arrives,true)+' · '+c.daysUntilArrives+'d left</div></div>');
+        '<div style="flex:1;font-size:12px;"><strong>'+c.name+'</strong> in production'+(c.vendor?' at '+c.vendor:'')+etaNote+'</div>'+
+        '<div style="font-size:11px;color:#555;">need by '+fmt(c.arrives,true)+' · '+c.daysUntilArrives+'d left</div></div>');
     }
   });
   if (r.mfgTrack) {
@@ -682,6 +693,7 @@ function calculateSingle() {
           <div class="ms ${artCls}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div><div class="ms-note">Sent to ${vendorLabel||'vendor'}${c.daysUntilArtwork>=0?' — '+c.daysUntilArtwork+'d from today':' — OVERDUE'}</div></div>
           <div class="ms purple"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div><div class="ms-note">${prodNote}</div></div>
           <div class="ms ${msClass(c.daysUntilArrives)}"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div><div class="ms-note">${arriveNote}</div></div>
+          ${c.confirmedEta ? `<div class="ms ${c.etaDelta > 0 ? 'red' : 'green'}"><div class="ms-label">Vendor ETA 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div><div class="ms-note">${c.etaDelta > 0 ? '⚠ '+c.etaDelta+'d late vs. need-by' : c.etaDelta < 0 ? '✓ '+Math.abs(c.etaDelta)+'d early' : '✓ On schedule'}</div></div>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -710,15 +722,7 @@ function calculateSingle() {
       </div>`;
   }
 
-  // Combined summary
-  const combinedSection = `
-    <div class="comp-section">
-      <div class="comp-section-head"><div class="comp-dot" style="background:#27ae60"></div>Launch Summary</div>
-      <div class="ms-grid">
-        <div class="ms"><div class="ms-label">3PL Must Receive By</div><div class="ms-date">${fmt(r.threePlReceive,true)}</div><div class="ms-note">1 wk before launch</div></div>
-        <div class="ms green"><div class="ms-label">Launch Date</div><div class="ms-date">${fmt(r.launch,true)}</div><div class="ms-note">${r.daysToLaunch>0?r.daysToLaunch+'d away':r.daysToLaunch===0?'TODAY':Math.abs(r.daysToLaunch)+'d ago'}</div></div>
-      </div>
-    </div>`;
+  const combinedSection = '';
 
   const ganttSVG = buildGantt([{name, r}]);
   const critName = r.critical ? r.critical.name : '—';
