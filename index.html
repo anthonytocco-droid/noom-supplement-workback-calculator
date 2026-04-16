@@ -479,6 +479,158 @@ const GANTT_C = {
 };
 
 // ══════════════════════════════════════════
+//  Status snapshot
+// ══════════════════════════════════════════
+function currentPhaseTag(r) {
+  var t = today();
+  if (t >= r.launch) return '<span style="background:#dcfce7;color:#166534;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;">Launched</span>';
+  var m = r.mfgTrack;
+  if (m) {
+    if (t >= m.inBottleStart)  return '<span style="background:#cffafe;color:#0e7490;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;">In-Bottle Testing</span>';
+    if (t >= m.fillSealStart)  return '<span style="background:#dcfce7;color:#065f46;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;">Fill &amp; Seal</span>';
+    if (t >= m.preBottleStart) return '<span style="background:#cffafe;color:#0e7490;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;">Pre-Bottle Testing</span>';
+    if (t >= m.suppMfgStart)   return '<span style="background:#e0f2fe;color:#0891b2;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;">In Production</span>';
+  }
+  if (r.critical) {
+    if (t >= r.critical.printReady)  return '<span style="background:#dbeafe;color:#1d4ed8;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;">Pkg Production</span>';
+    if (t >= r.critical.designStart) return '<span style="background:#eff6ff;color:#1e40af;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;">Artwork</span>';
+  }
+  return '<span style="background:#f1f5f9;color:#64748b;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;">Pre-Production</span>';
+}
+
+function buildSnapshot(name, r) {
+  var t = today();
+  var isLaunched = t >= r.launch;
+  var firstComp  = r.components.reduce(function(a,b){return a.designStart<b.designStart?a:b;}, r.components[0]);
+  var critComp   = r.critical || r.components[0];
+  var latestArr  = r.components.reduce(function(a,b){return a.arrives>b.arrives?a:b;}, r.components[0]).arrives;
+  var prodEnd    = r.mfgTrack ? r.mfgTrack.preBottleStart : latestArr;
+
+  var phases = [
+    {id:'artwork',    label:'Design & Artwork', start:firstComp.designStart, end:critComp.printReady, color:'#3b82f6'},
+    {id:'production', label:'In Production',    start:critComp.printReady,   end:prodEnd,             color:'#0891b2'},
+  ];
+  if (r.mfgTrack) phases.push({id:'testing', label:'Testing & Fill', start:r.mfgTrack.preBottleStart, end:r.mfgTrack.inBottleComplete, color:'#0e7490'});
+  phases.push({id:'fulfillment', label:'Fulfillment', start:r.shipTo3PL, end:r.launch, color:'#27ae60'});
+
+  function phaseStatus(p) {
+    if (isLaunched || t > p.end) return 'done';
+    if (t >= p.start) return 'active';
+    return 'upcoming';
+  }
+
+  var stepHTML = phases.map(function(p,i) {
+    var st = phaseStatus(p), done = st==='done', active = st==='active';
+    var bg  = done ? '#f0faf5' : active ? p.color : '#f8f9fa';
+    var bdr = done ? '#86efac' : active ? p.color : '#e2e8f0';
+    var ic  = done ? '✓' : active ? '●' : '○';
+    var icC = done ? '#27ae60' : active ? '#fff' : '#cbd5e1';
+    var lC  = done ? '#166534' : active ? '#fff' : '#94a3b8';
+    var sub = done ? 'Complete' : active ? 'In progress' : fmt(p.start);
+    var subC = done ? '#16a34a' : active ? 'rgba(255,255,255,0.75)' : '#cbd5e1';
+    return '<div style="flex:1;min-width:0;padding:8px 5px;border:2px solid '+bdr+';border-radius:8px;background:'+bg+';text-align:center;">'+
+      '<div style="font-size:13px;color:'+icC+';margin-bottom:2px;">'+ic+'</div>'+
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:'+lC+';">'+p.label+'</div>'+
+      '<div style="font-size:10px;color:'+subC+';margin-top:1px;">'+sub+'</div>'+
+      '</div>'+(i < phases.length-1 ? '<div style="color:#cbd5e1;font-size:14px;align-self:center;flex-shrink:0;padding:0 3px;">›</div>' : '');
+  }).join('');
+
+  var details = [];
+  r.components.forEach(function(c) {
+    if (t >= c.designStart && t < c.printReady) {
+      details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#eff6ff;border-left:3px solid #93c5fd;border-radius:0 6px 6px 0;">'+
+        '<div style="flex:1;font-size:12px;"><strong>'+c.name+'</strong> — artwork due <strong>'+fmt(c.printReady,true)+'</strong></div>'+
+        '<div style="font-size:11px;font-weight:700;color:'+(c.daysUntilArtwork<=7?'#e74c3c':c.daysUntilArtwork<=14?'#e67e22':'#555')+';">'+
+        (c.daysUntilArtwork===0?'DUE TODAY':c.daysUntilArtwork+'d left')+'</div></div>');
+    } else if (t >= c.printReady && t <= c.arrives) {
+      details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#f0f7ff;border-left:3px solid '+(c.deliverTo==='3pl'?'#f59e0b':'#3b82f6')+';border-radius:0 6px 6px 0;">'+
+        '<div style="flex:1;font-size:12px;"><strong>'+c.name+'</strong> in production'+(c.vendor?' at '+c.vendor:'')+'</div>'+
+        '<div style="font-size:11px;color:#555;">arrives '+fmt(c.arrives,true)+' · '+c.daysUntilArrives+'d left</div></div>');
+    }
+  });
+  if (r.mfgTrack) {
+    var m = r.mfgTrack;
+    if (t >= m.suppMfgStart && t < m.preBottleStart) {
+      details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#f0fdfa;border-left:3px solid #0891b2;border-radius:0 6px 6px 0;">'+
+        '<div style="flex:1;font-size:12px;"><strong>Supplement Manufacturing</strong> at Vitaquest</div>'+
+        '<div style="font-size:11px;color:#555;">complete '+fmt(m.suppMfgComplete,true)+' · '+diffDays(m.suppMfgComplete,t)+'d left</div></div>');
+    }
+    if (t >= m.preBottleStart && t <= m.preBottleComplete) {
+      details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#f0fdfa;border-left:3px solid #0e7490;border-radius:0 6px 6px 0;">'+
+        '<div style="flex:1;font-size:12px;"><strong>Pre-Bottle Testing</strong></div>'+
+        '<div style="font-size:11px;color:#555;">complete '+fmt(m.preBottleComplete,true)+' · '+diffDays(m.preBottleComplete,t)+'d left</div></div>');
+    }
+    if (t >= m.inBottleStart && t <= m.inBottleComplete) {
+      details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#f0fdfa;border-left:3px solid #0e7490;border-radius:0 6px 6px 0;">'+
+        '<div style="flex:1;font-size:12px;"><strong>In-Bottle Testing</strong></div>'+
+        '<div style="font-size:11px;color:#555;">complete '+fmt(m.inBottleComplete,true)+' · '+diffDays(m.inBottleComplete,t)+'d left</div></div>');
+    }
+  }
+  if (t >= r.shipTo3PL && t < r.launch) {
+    details.push('<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#f0faf5;border-left:3px solid #27ae60;border-radius:0 6px 6px 0;">'+
+      '<div style="flex:1;font-size:12px;"><strong>Fulfillment</strong> — in transit / at 3PL</div>'+
+      '<div style="font-size:11px;color:#555;">launch '+fmt(r.launch,true)+' · '+r.daysToLaunch+'d left</div></div>');
+  }
+  var activeDetailHTML = (!isLaunched && details.length)
+    ? '<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#888;margin-bottom:3px;">Active Now</div>'+details.join('')+'</div>'
+    : '';
+
+  var milestones = [];
+  r.components.forEach(function(c) {
+    if (c.daysUntilArtwork >= 0) milestones.push({label:c.name+' artwork due', date:c.printReady, days:c.daysUntilArtwork});
+    if (c.daysUntilArrives >= 0) milestones.push({label:c.name+' arrives at '+(c.deliverTo==='3pl'?'3PL':'Vitaquest'), date:c.arrives, days:c.daysUntilArrives});
+  });
+  if (r.mfgTrack) {
+    [[r.mfgTrack.fillSealStart,'Fill & Seal'],[r.mfgTrack.inBottleComplete,'In-bottle test done']].forEach(function(pair) {
+      var days = diffDays(pair[0],t); if (days>=0) milestones.push({label:pair[1],date:pair[0],days:days});
+    });
+  }
+  var dS = diffDays(r.shipTo3PL,t); if (dS>=0) milestones.push({label:'Ships to 3PL',date:r.shipTo3PL,days:dS});
+  var dL = diffDays(r.launch,t);    if (dL>=0) milestones.push({label:'Launch',date:r.launch,days:dL});
+  milestones.sort(function(a,b){return a.days-b.days;});
+  var nextMs = milestones[0] || null;
+
+  var overdueArt = r.components.filter(function(c){return c.daysUntilArtwork<0;});
+  var badge, badgeColor;
+  if (isLaunched)              { badge='Launched';         badgeColor='#27ae60'; }
+  else if (overdueArt.length)  { badge='Action Required'; badgeColor='#e74c3c'; }
+  else if (r.daysToLaunch<=14) { badge='Imminent';         badgeColor='#e67e22'; }
+  else                         { badge='On Track';         badgeColor='#1a5fa8'; }
+
+  var nextMsHTML = (!isLaunched && nextMs)
+    ? '<div style="display:flex;gap:12px;align-items:center;background:#f0f6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-top:10px;">'+
+      '<div style="flex:1;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:2px;">Next Milestone</div>'+
+      '<div style="font-size:13px;font-weight:700;color:#1a1a2e;">'+nextMs.label+'</div>'+
+      '<div style="font-size:11px;color:#555;margin-top:1px;">'+fmt(nextMs.date,true)+'</div></div>'+
+      '<div style="text-align:right;"><div style="font-size:24px;font-weight:700;line-height:1;color:'+(nextMs.days<=7?'#e74c3c':nextMs.days<=14?'#e67e22':'#1a5fa8')+';">'+
+      (nextMs.days===0?'TODAY':nextMs.days)+'</div>'+
+      (nextMs.days>0?'<div style="font-size:10px;color:#888;margin-top:2px;">days away</div>':'')+
+      '</div></div>'
+    : '';
+
+  var overdueHTML = overdueArt.length
+    ? '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;margin-top:10px;">'+
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#b91c1c;margin-bottom:5px;">Overdue</div>'+
+      overdueArt.map(function(c){return '<div style="font-size:12px;color:#7f1d1d;"><strong>'+c.name+'</strong> artwork overdue by '+Math.abs(c.daysUntilArtwork)+' days (was due '+fmt(c.printReady,true)+')</div>';}).join('')+'</div>'
+    : '';
+
+  var launchedHTML = isLaunched
+    ? '<div style="background:#f0faf5;border:1px solid #86efac;border-radius:8px;padding:10px 14px;margin-top:10px;text-align:center;">'+
+      '<div style="font-size:14px;font-weight:700;color:#166534;">✓ Successfully Launched · '+fmt(r.launch,true)+'</div>'+
+      '<div style="font-size:12px;color:#166534;margin-top:2px;">'+Math.abs(r.daysToLaunch)+' days ago</div></div>'
+    : '';
+
+  return '<div style="padding:16px 24px;border-bottom:1px solid #eee;background:#fafbfc;">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'+
+    '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#888;">Status Snapshot · '+fmt(t,true)+'</div>'+
+    '<div style="background:'+badgeColor+'18;color:'+badgeColor+';border:1px solid '+badgeColor+'44;border-radius:12px;padding:3px 12px;font-size:11px;font-weight:700;">'+
+    badge+' · '+(isLaunched?Math.abs(r.daysToLaunch)+'d ago':r.daysToLaunch+'d to launch')+
+    '</div></div>'+
+    '<div style="display:flex;gap:5px;align-items:stretch;">'+stepHTML+'</div>'+
+    activeDetailHTML+nextMsHTML+overdueHTML+launchedHTML+'</div>';
+}
+
+// ══════════════════════════════════════════
 //  Single SKU renderer
 // ══════════════════════════════════════════
 function calculateSingle() {
@@ -576,6 +728,7 @@ function calculateSingle() {
     ${alertHTML}
     <div class="card">
       <div class="card-head"><span>${name}</span><span class="pill ${stCls}">${stLabel} · Launch ${fmt(r.launch,true)}</span></div>
+      ${buildSnapshot(name, r)}
       ${compSections}${mfgSection}${combinedSection}
       <div class="parallel-note">
         <strong>Packaging critical path:</strong> ${critName} — artwork due ${critDate}.
@@ -641,7 +794,8 @@ function renderPortfolio() {
         ${i===0?`<td rowspan="${r.components.length}" style="vertical-align:middle;font-size:12px;">${mfgCell}</td>
         <td rowspan="${r.components.length}" style="vertical-align:middle;">${r.mfgTrack?fmt(r.mfgTrack.fillSealStart):fmt(r.arrivedByVQ)}</td>
         <td rowspan="${r.components.length}" style="vertical-align:middle;"><strong>${fmt(r.launch,true)}</strong></td>
-        <td rowspan="${r.components.length}" style="vertical-align:middle;"><span class="pill ${stCls}">${stLabel}</span></td>`:''}
+        <td rowspan="${r.components.length}" style="vertical-align:middle;"><span class="pill ${stCls}">${stLabel}</span></td>
+        <td rowspan="${r.components.length}" style="vertical-align:middle;">${currentPhaseTag(r)}</td>`:''}
       </tr>`;
     }).join('');
   }).join('');
@@ -654,7 +808,7 @@ function renderPortfolio() {
       <div class="table-wrap">
         <table class="summary"><thead><tr>
           <th>SKU</th><th>Component</th><th>Artwork Due</th><th>@ Destination By</th>
-          <th>Supplement Mfg + Testing</th><th>Fill/Seal</th><th>Launch</th><th>Status</th>
+          <th>Supplement Mfg + Testing</th><th>Fill/Seal</th><th>Launch</th><th>Status</th><th>Phase</th>
         </tr></thead><tbody>${rows}</tbody></table>
       </div>
       <div class="gantt-title">Portfolio Gantt</div>
