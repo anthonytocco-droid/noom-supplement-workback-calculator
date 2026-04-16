@@ -968,10 +968,46 @@ function renderActiveLaunches() {
     const skuMfgOpts   = SKU_MFG_OPTS[name] || {};
     const r            = workback(launchVal, compsPreset, { enabled: true, mfgWeeks: 7, externalPreBottle: skuMfgOpts.externalPreBottle || false, externalInBottle: skuMfgOpts.externalInBottle || false });
     const [stLabel, stCls] = statusPill(r.daysToLaunch);
+    const t = today();
+    const isLaunched = t >= r.launch;
+
+    // Build next milestone
+    const milestones = [];
+    r.components.forEach(c => {
+      if (c.daysUntilArtwork >= 0) milestones.push({label:c.name+' artwork due', date:c.printReady, days:c.daysUntilArtwork});
+      if (c.daysUntilArrives >= 0) milestones.push({label:c.name+' arrives', date:c.arrives, days:c.daysUntilArrives});
+    });
+    if (r.mfgTrack) {
+      [[r.mfgTrack.fillSealStart,'Fill & Seal'],[r.mfgTrack.inBottleComplete,'In-bottle test done']].forEach(([d,l]) => {
+        const days = diffDays(d, t); if (days >= 0) milestones.push({label:l, date:d, days});
+      });
+    }
+    const dS = diffDays(r.shipTo3PL, t); if (dS >= 0) milestones.push({label:'Ships to 3PL', date:r.shipTo3PL, days:dS});
+    const dL = diffDays(r.launch, t);    if (dL >= 0) milestones.push({label:'Launch', date:r.launch, days:dL});
+    milestones.sort((a,b) => a.days - b.days);
+    const nextMs = milestones[0] || null;
+
+    const nextMsHTML = (!isLaunched && nextMs)
+      ? `<div style="display:flex;gap:12px;align-items:center;background:#f0f6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin:12px 18px 14px;">
+          <div style="flex:1;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:2px;">Next Milestone</div>
+            <div style="font-size:13px;font-weight:700;color:#1a1a2e;">${nextMs.label}</div>
+            <div style="font-size:11px;color:#555;margin-top:1px;">${fmt(nextMs.date,true)}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:24px;font-weight:700;line-height:1;color:${nextMs.days<=7?'#e74c3c':nextMs.days<=14?'#e67e22':'#1a5fa8'};">${nextMs.days===0?'TODAY':nextMs.days}</div>
+            ${nextMs.days>0?'<div style="font-size:10px;color:#888;margin-top:2px;">days away</div>':''}
+          </div>
+        </div>`
+      : isLaunched
+        ? `<div style="background:#f0faf5;border:1px solid #86efac;border-radius:8px;padding:10px 14px;margin:12px 18px 14px;text-align:center;">
+            <div style="font-size:13px;font-weight:700;color:#166534;">✓ Launched · ${fmt(r.launch,true)}</div>
+          </div>`
+        : '';
+
     return `<div class="card">
       <div class="card-head"><span>${name}</span><span class="pill ${stCls}">${stLabel} · Launch ${fmt(r.launch,true)}</span></div>
-      ${buildSnapshot(name, r)}
-      ${buildActiveCompSections(r)}
+      ${nextMsHTML}
     </div>`;
   }).join('');
 
