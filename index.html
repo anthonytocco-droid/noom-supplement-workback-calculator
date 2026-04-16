@@ -249,6 +249,10 @@ const SKU_COMPONENTS = {
     { name:'Outer Shipper',           weeks:4, vendor:'',             deliverTo:'3pl' },
   ],
 };
+const SKU_MFG_OPTS = {
+  'Metabolic': { externalPreBottle: true, externalInBottle: false },
+  'Vitality':  { externalPreBottle: true, externalInBottle: false },
+};
 function prefillLaunchDate(sel, targetId) {
   const sku = sel.value;
   const date = SKU_LAUNCH_DATES[sku];
@@ -256,6 +260,9 @@ function prefillLaunchDate(sel, targetId) {
   const preset = SKU_COMPONENTS[sku];
   comps.single = preset ? preset.map(c => ({ confirmedEta: null, artworkDoneDate: null, ...c })) : [];
   renderChips('single');
+  const opts = SKU_MFG_OPTS[sku] || {};
+  document.getElementById('extPreBottle').checked = opts.externalPreBottle || false;
+  document.getElementById('extInBottle').checked  = opts.externalInBottle  || false;
 }
 
 // ══════════════════════════════════════════
@@ -588,7 +595,6 @@ function calculateSingle() {
         <div class="comp-section-head">
           <div class="comp-dot" style="background:${color}"></div>${c.name}
           <span style="font-weight:400;color:#aaa;">${c.weeks}-wk lead time</span>
-          ${c===r.critical?'<span style="background:#fde8e8;color:#e74c3c;border-radius:4px;padding:2px 7px;font-size:10px;">CRITICAL PATH</span>':''}
         </div>
         <div class="ms-grid">
           ${c.artworkDoneDate
@@ -615,7 +621,6 @@ function calculateSingle() {
         <div class="comp-section-head">
           <div class="comp-dot" style="background:#0891b2"></div>
           Vitaquest Supplement Manufacturing
-          <span style="background:#e0f7f7;color:#0e7490;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">${t.mfgWks} wks — concurrent with packaging</span>
         </div>
         <div class="ms-grid">
           <div class="ms"><div class="ms-label">Mfg Start</div><div class="ms-date">${fmt(t.suppMfgStart,true)}</div><div class="ms-note">Same date as print-ready artwork — concurrent</div></div>
@@ -633,12 +638,10 @@ function calculateSingle() {
   const ganttSVG = buildGantt([{name, r}]);
 
   document.getElementById('singleResult').innerHTML = `
-    ${alertHTML}
     <div class="card">
       <div class="card-head"><span>${name}</span><span class="pill ${stCls}">${stLabel} · Launch ${fmt(r.launch,true)}</span></div>
       ${buildSnapshot(name, r)}
       ${compSections}${mfgSection}${combinedSection}
-      <div class="gantt-title">Gantt Chart</div>
       <div class="gantt-wrap">${ganttSVG}</div>
     </div>`;
 }
@@ -722,7 +725,6 @@ function renderPortfolio() {
           <th>Supplement Mfg + Testing</th><th>Fill/Seal</th><th>Launch</th><th>Status</th><th>Phase</th>
         </tr></thead><tbody>${rows}</tbody></table>
       </div>
-      <div class="gantt-title">Portfolio Gantt</div>
       <div class="gantt-wrap">${ganttSVG}</div>
     </div>`;
 }
@@ -881,8 +883,8 @@ function buildGantt(skuList) {
   // Today line
   if (todayDate >= minDate && todayDate <= maxDate) {
     const tx = xOf(todayDate);
-    o += `<line x1="${tx}" y1="${HDR_H-5}" x2="${tx}" y2="${curY-SEP}" stroke="${GANTT_C.today}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.75"/>`;
-    o += `<text x="${tx+3}" y="${HDR_H-7}" font-size="9" fill="${GANTT_C.today}" font-weight="700">TODAY</text>`;
+    o += `<line x1="${tx}" y1="${HDR_H}" x2="${tx}" y2="${curY-SEP}" stroke="${GANTT_C.today}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.75"/>`;
+    o += `<text x="${tx+3}" y="${HDR_H+10}" font-size="9" fill="${GANTT_C.today}" font-weight="700">TODAY</text>`;
   }
   o += `<line x1="${LABEL_W}" y1="${HDR_H}" x2="${LABEL_W}" y2="${curY-SEP}" stroke="#ccc" stroke-width="1"/>`;
   o += '</svg>';
@@ -907,6 +909,54 @@ function buildLegend(r) {
 // ══════════════════════════════════════════
 //  Active launch status dashboard
 // ══════════════════════════════════════════
+function buildActiveCompSections(r) {
+  const compHtml = r.components.map(c => {
+    const vendorLabel = c.vendor || 'Vendor';
+    const is3pl       = c.deliverTo === '3pl';
+    const arriveLabel = is3pl ? 'Arrives at 3PL' : 'Arrives at Vitaquest';
+    const artworkTiles = c.artworkDoneDate
+      ? `<div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 weeks before artwork due</div></div>
+         <div class="ms"><div class="ms-label">Artwork Sent ✓</div><div class="ms-date">${fmt(c.artworkDoneDate,true)}</div><div class="ms-note">Sent to ${vendorLabel}</div></div>`
+      : `<div class="ms"><div class="ms-label">Design Start</div><div class="ms-date">${fmt(c.designStart,true)}</div><div class="ms-note">~5 weeks before artwork due</div></div>
+         <div class="ms"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div><div class="ms-note">Send to ${vendorLabel}</div></div>`;
+    const etaTile = c.confirmedEta ? (()=>{
+      const d = Math.round((c.confirmedEta - c.arrives) / 86400000);
+      return `<div class="ms ${d>0?'red':'green'}"><div class="ms-label">Vendor ETA 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div><div class="ms-note">${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}</div></div>`;
+    })() : '';
+    return `<div class="comp-section">
+      <div class="comp-section-head">
+        <div class="comp-dot" style="background:#3b82f6"></div>${c.name}
+        <span style="font-weight:400;color:#aaa;">${c.weeks}-wk lead time</span>
+        ${c===r.critical?'<span style="background:#fde8e8;color:#e74c3c;border-radius:4px;padding:2px 7px;font-size:10px;">CRITICAL PATH</span>':''}
+      </div>
+      <div class="ms-grid">
+        ${artworkTiles}
+        <div class="ms"><div class="ms-label">${vendorLabel} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div><div class="ms-note">${c.weeks} wks lead time</div></div>
+        <div class="ms"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div></div>
+        ${etaTile}
+      </div>
+    </div>`;
+  }).join('');
+
+  if (!r.mfgTrack) return compHtml;
+  const t = r.mfgTrack;
+  const mfgHtml = `<div class="comp-section">
+    <div class="comp-section-head">
+      <div class="comp-dot" style="background:#0891b2"></div>
+      Vitaquest Supplement Manufacturing
+    </div>
+    <div class="ms-grid">
+      <div class="ms"><div class="ms-label">Mfg Start</div><div class="ms-date">${fmt(t.suppMfgStart,true)}</div></div>
+      <div class="ms"><div class="ms-label">Supplement Mfg Complete</div><div class="ms-date">${fmt(t.suppMfgComplete,true)}</div></div>
+      <div class="ms"><div class="ms-label">Pre-Bottling 3rd Party Testing</div><div class="ms-date">${fmt(t.preBottleStart)} → ${fmt(t.preBottleComplete)}</div></div>
+      <div class="ms"><div class="ms-label">Fill / Seal</div><div class="ms-date">${fmt(t.fillSealStart,true)}</div></div>
+      <div class="ms"><div class="ms-label">In-Bottle 3rd Party Testing</div><div class="ms-date">${fmt(t.inBottleStart)} → ${fmt(t.inBottleComplete)}</div></div>
+      <div class="ms"><div class="ms-label">Ships to 3PL</div><div class="ms-date">${fmt(r.shipTo3PL,true)}</div></div>
+    </div>
+  </div>`;
+  return compHtml + mfgHtml;
+}
+
 function renderActiveLaunches() {
   const el = document.getElementById('activeLaunches');
   const skuNames = Object.keys(SKU_LAUNCH_DATES);
@@ -915,11 +965,13 @@ function renderActiveLaunches() {
   const cards = skuNames.map(name => {
     const launchVal    = SKU_LAUNCH_DATES[name];
     const compsPreset  = (SKU_COMPONENTS[name] || []).map(c => ({ confirmedEta: null, artworkDoneDate: null, ...c }));
-    const r            = workback(launchVal, compsPreset, { enabled: true, mfgWeeks: 7, externalPreBottle: false, externalInBottle: false });
+    const skuMfgOpts   = SKU_MFG_OPTS[name] || {};
+    const r            = workback(launchVal, compsPreset, { enabled: true, mfgWeeks: 7, externalPreBottle: skuMfgOpts.externalPreBottle || false, externalInBottle: skuMfgOpts.externalInBottle || false });
     const [stLabel, stCls] = statusPill(r.daysToLaunch);
     return `<div class="card">
       <div class="card-head"><span>${name}</span><span class="pill ${stCls}">${stLabel} · Launch ${fmt(r.launch,true)}</span></div>
       ${buildSnapshot(name, r)}
+      ${buildActiveCompSections(r)}
     </div>`;
   }).join('');
 
