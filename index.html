@@ -284,12 +284,10 @@ const SKU_COMPONENTS = {
 function prefillLaunchDate(sel, targetId) {
   const sku = sel.value;
   const date = SKU_LAUNCH_DATES[sku];
-  if (date) document.getElementById(targetId).value = date;
+  document.getElementById(targetId).value = date || '';
   const preset = SKU_COMPONENTS[sku];
-  if (preset) {
-    comps.single = preset.map(c => ({ ...c, confirmedEta: null, artworkDoneDate: null }));
-    renderChips('single');
-  }
+  comps.single = preset ? preset.map(c => ({ ...c, confirmedEta: null, artworkDoneDate: null })) : [];
+  renderChips('single');
 }
 
 // ══════════════════════════════════════════
