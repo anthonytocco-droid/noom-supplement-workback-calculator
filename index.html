@@ -585,8 +585,6 @@ function calculateSingle() {
       <div class="comp-section">
         <div class="comp-section-head">
           <div class="comp-dot" style="background:${color}"></div>${c.name}
-          ${destBadge}
-          ${c.vendor ? `<span style="background:#f0f4ff;color:#3b5bdb;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">${c.vendor}</span>` : ''}
           <span style="font-weight:400;color:#aaa;">${c.weeks}-wk lead time</span>
           ${c===r.critical?'<span style="background:#fde8e8;color:#e74c3c;border-radius:4px;padding:2px 7px;font-size:10px;">CRITICAL PATH</span>':''}
         </div>
