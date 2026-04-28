@@ -896,7 +896,7 @@ function buildGantt(skuList) {
   if (todayDate >= minDate && todayDate <= maxDate) {
     const tx = xOf(todayDate);
     o += `<line x1="${tx}" y1="${HDR_H}" x2="${tx}" y2="${curY-SEP}" stroke="${GANTT_C.today}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.75"/>`;
-    o += `<text x="${tx+3}" y="${HDR_H+SKU_HDR_H+COMP_H-4}" font-size="9" fill="${GANTT_C.today}" font-weight="700">TODAY</text>`;
+    o += `<text x="${tx+3}" y="${HDR_H+SKU_HDR_H-5}" font-size="9" fill="${GANTT_C.today}" font-weight="700">TODAY</text>`;
   }
   o += `<line x1="${LABEL_W}" y1="${HDR_H}" x2="${LABEL_W}" y2="${curY-SEP}" stroke="#ccc" stroke-width="1"/>`;
   o += '</svg>';
