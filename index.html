@@ -500,7 +500,7 @@ function buildSnapshot(name, r) {
 
   var milestones = [];
   r.components.forEach(function(c) {
-    if (c.daysUntilArtwork >= 0) milestones.push({label:c.name+' artwork due', date:c.printReady, days:c.daysUntilArtwork});
+    if (!c.artworkDoneDate) milestones.push({label:c.name+' artwork due', date:c.printReady, days:c.daysUntilArtwork});
     if (c.daysUntilArrives >= 0) milestones.push({label:c.name+' arrives at '+(c.deliverTo==='3pl'?'3PL':'Vitaquest'), date:c.arrives, days:c.daysUntilArrives});
   });
   if (r.mfgTrack) {
@@ -525,9 +525,9 @@ function buildSnapshot(name, r) {
       '<div style="flex:1;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:2px;">Next Milestone</div>'+
       '<div style="font-size:13px;font-weight:700;color:#1a1a2e;">'+nextMs.label+'</div>'+
       '<div style="font-size:11px;color:#555;margin-top:1px;">'+fmt(nextMs.date,true)+'</div></div>'+
-      '<div style="text-align:right;"><div style="font-size:24px;font-weight:700;line-height:1;color:'+(nextMs.days<=7?'#e74c3c':nextMs.days<=14?'#e67e22':'#1a5fa8')+';">'+
-      (nextMs.days===0?'TODAY':nextMs.days)+'</div>'+
-      (nextMs.days>0?'<div style="font-size:10px;color:#888;margin-top:2px;">days away</div>':'')+
+      '<div style="text-align:right;"><div style="font-size:24px;font-weight:700;line-height:1;color:'+(nextMs.days<0?'#e74c3c':nextMs.days<=7?'#e74c3c':nextMs.days<=14?'#e67e22':'#1a5fa8')+';">'+
+      (nextMs.days<0?'OVERDUE':nextMs.days===0?'TODAY':nextMs.days)+'</div>'+
+      (nextMs.days>0?'<div style="font-size:10px;color:#888;margin-top:2px;">days away</div>':nextMs.days<0?'<div style="font-size:10px;color:#e74c3c;margin-top:2px;">'+Math.abs(nextMs.days)+'d ago</div>':'')+
       '</div></div>'
     : '';
 
