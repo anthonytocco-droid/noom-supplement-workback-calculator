@@ -216,7 +216,7 @@ const MS_DAY = 86400000;
 function addDays(d,n)  { const r=new Date(d); r.setDate(r.getDate()+n); return r; }
 function subDays(d,n)  { return addDays(d,-n); }
 function subWeeks(d,n) { return subDays(d,n*7); }
-function diffDays(a,b) { return Math.round((a-b)/MS_DAY); }
+function diffDays(a,b) { const da=new Date(a); da.setHours(0,0,0,0); const db=new Date(b); db.setHours(0,0,0,0); return Math.round((da-db)/MS_DAY); }
 function today()       { const d=new Date(); d.setHours(0,0,0,0); return d; }
 function fmt(d,yr)     { return d.toLocaleDateString('en-US',{month:'short',day:'numeric',...(yr?{year:'numeric'}:{})}); }
 function msClass(days) { if(days<0||days<=14)return 'red'; if(days<=28)return 'amber'; return ''; }
