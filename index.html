@@ -531,11 +531,7 @@ function buildSnapshot(name, r) {
       '</div></div>'
     : '';
 
-  var overdueHTML = overdueArt.length
-    ? '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;margin-top:10px;">'+
-      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#b91c1c;margin-bottom:5px;">Overdue</div>'+
-      overdueArt.map(function(c){return '<div style="font-size:12px;color:#7f1d1d;"><strong>'+c.name+'</strong> artwork overdue by '+Math.abs(c.daysUntilArtwork)+' days (was due '+fmt(c.printReady,true)+')</div>';}).join('')+'</div>'
-    : '';
+  var overdueHTML = '';
 
   var launchedHTML = isLaunched
     ? '<div style="background:#f0faf5;border:1px solid #86efac;border-radius:8px;padding:10px 14px;margin-top:10px;text-align:center;">'+
