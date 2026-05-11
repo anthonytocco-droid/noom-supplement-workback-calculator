@@ -240,7 +240,7 @@ const SKU_LAUNCH_DATES = {
 };
 const SKU_COMPONENTS = {
   'Metabolic': [
-    { name:'Gusset Bag',            weeks:5, vendor:'Stephen Gould', deliverTo:'vitaquest', artworkDoneDate:'2026-03-31' },
+    { name:'Gusset Bag',            weeks:5, vendor:'Stephen Gould', deliverTo:'vitaquest', artworkDoneDate:'2026-03-31', confirmedEta:'2026-05-08' },
     { name:'Shrink Wrap Jar',       weeks:4, vendor:'Stephen Gould', deliverTo:'3pl' },
     { name:'Outer Shipper',         weeks:4, vendor:'',             deliverTo:'3pl', artworkDoneDate:'2026-04-22' },
     { name:'Marketing Postcard',    weeks:2, vendor:'',             deliverTo:'3pl' },
@@ -339,7 +339,7 @@ function toggleAssumptions() {
 
 function workback(launchDateStr, components, mfg={enabled:false}) {
   const launch         = new Date(launchDateStr + 'T12:00:00');
-  const threePlReceive = subWeeks(launch, 1);
+  const threePlReceive = subDays(launch, 9);
   const shipTo3PL      = subDays(threePlReceive, 5);
 
   let arrivedByVQ, productReady, mfgTrack = null;
@@ -380,7 +380,7 @@ function workback(launchDateStr, components, mfg={enabled:false}) {
   // Packaging component timelines
   const compTimelines = components.map(({name, weeks, vendor, deliverTo, confirmedEta, artworkDoneDate}) => {
     const dest    = deliverTo || 'vitaquest';
-    const arrives = dest === '3pl' ? subWeeks(launch, 1) : new Date(arrivedByVQ);
+    const arrives = dest === '3pl' ? subDays(launch, 9) : (confirmedEta ? new Date(confirmedEta + 'T12:00:00') : new Date(arrivedByVQ));
     const printReady  = subWeeks(arrives, weeks);
     const designStart = subWeeks(printReady, 5);
     const etaDate  = confirmedEta    ? new Date(confirmedEta    + 'T12:00:00') : null;
@@ -586,8 +586,8 @@ function calculateSingle() {
     const destBadge   = is3pl
       ? `<span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">→ The Pharmacy Hub</span>`
       : `<span style="background:#e0f2fe;color:#0369a1;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">→ Vitaquest</span>`;
-    const arriveLabel = is3pl ? 'Arrives at The Pharmacy Hub' : 'Arrives at Vitaquest';
-    const arriveNote  = is3pl ? 'Needed 1 wk before launch — independent track' : r.mfgTrack ? 'Fill/seal starts when last VQ component + tested supplement ready' : 'Fill/seal when last component arrives';
+    const arriveLabel = is3pl ? 'Ship Test Start' : 'Arrives at Vitaquest';
+    const arriveNote  = is3pl ? 'Needed 9 days before launch — independent track' : r.mfgTrack ? 'Fill/seal starts when last VQ component + tested supplement ready' : 'Fill/seal when last component arrives';
     const prodNote    = is3pl ? `${c.weeks} wks — ships direct to 3PL` : `${c.weeks} wks — concurrent w/ supplement mfg`;
     return `
       <div class="comp-section">
