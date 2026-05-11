@@ -603,8 +603,9 @@ function calculateSingle() {
           <div class="ms ${artCls}" title="Send to ${vendorLabel||'vendor'}${c.daysUntilArtwork>=0?' — '+c.daysUntilArtwork+'d from today':' — OVERDUE'}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div></div>`
           }
           <div class="ms" title="${prodNote}"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div></div>
+          ${is3pl ? `<div class="ms ${c.confirmedEta?(()=>{const d=Math.round((c.confirmedEta-c.arrives)/86400000);return d>0?'red':'green';})():''}"><div class="ms-label">ETA to 3PL${c.confirmedEta?' 🔒':''}</div><div class="ms-date">${c.confirmedEta?fmt(c.confirmedEta,true):'—'}</div></div>` : ''}
           <div class="ms" title="${arriveNote}"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div></div>
-          ${c.confirmedEta ? (()=>{ const d=Math.round((c.confirmedEta-c.arrives)/86400000); return `<div class="ms ${d>0?'red':'green'}" title="${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}"><div class="ms-label">Delivered to Vitaquest 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div></div>`; })() : ''}
+          ${!is3pl && c.confirmedEta ? (()=>{ const d=Math.round((c.confirmedEta-c.arrives)/86400000); return `<div class="ms ${d>0?'red':'green'}" title="${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}"><div class="ms-label">Delivered to Vitaquest 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div></div>`; })() : ''}
         </div>
       </div>`;
   }).join('');
@@ -940,8 +941,9 @@ function buildActiveCompSections(r) {
       <div class="ms-grid">
         ${artworkTiles}
         <div class="ms" title="${c.weeks} wks lead time"><div class="ms-label">${vendorLabel} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div></div>
+        ${is3pl ? `<div class="ms ${c.confirmedEta?(()=>{const d=Math.round((c.confirmedEta-c.arrives)/86400000);return d>0?'red':'green';})():''}"><div class="ms-label">ETA to 3PL${c.confirmedEta?' 🔒':''}</div><div class="ms-date">${c.confirmedEta?fmt(c.confirmedEta,true):'—'}</div></div>` : ''}
         <div class="ms"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div></div>
-        ${etaTile}
+        ${!is3pl ? etaTile : ''}
       </div>
     </div>`;
   }).join('');
