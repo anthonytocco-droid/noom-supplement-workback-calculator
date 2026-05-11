@@ -604,7 +604,7 @@ function calculateSingle() {
           }
           <div class="ms" title="${prodNote}"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div></div>
           <div class="ms" title="${arriveNote}"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div></div>
-          ${c.confirmedEta ? (()=>{ const d=Math.round((c.confirmedEta-c.arrives)/86400000); return `<div class="ms ${d>0?'red':'green'}" title="${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}"><div class="ms-label">Vendor ETA 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div></div>`; })() : ''}
+          ${c.confirmedEta ? (()=>{ const d=Math.round((c.confirmedEta-c.arrives)/86400000); return `<div class="ms ${d>0?'red':'green'}" title="${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}"><div class="ms-label">Delivered to Vitaquest 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div></div>`; })() : ''}
         </div>
       </div>`;
   }).join('');
@@ -929,7 +929,7 @@ function buildActiveCompSections(r) {
          <div class="ms" title="Send to ${vendorLabel}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div></div>`;
     const etaTile = c.confirmedEta ? (()=>{
       const d = Math.round((c.confirmedEta - c.arrives) / 86400000);
-      return `<div class="ms ${d>0?'red':'green'}" title="${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}"><div class="ms-label">Vendor ETA 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div></div>`;
+      return `<div class="ms ${d>0?'red':'green'}" title="${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}"><div class="ms-label">Delivered to Vitaquest 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div></div>`;
     })() : '';
     return `<div class="comp-section">
       <div class="comp-section-head">
