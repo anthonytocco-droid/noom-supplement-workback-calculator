@@ -148,19 +148,6 @@
           Add multiple SKUs
         </label>
       </div>
-      <!-- Packaging -->
-      <div class="comp-builder">
-        <div class="comp-builder-title">Packaging Components</div>
-        <div class="preset-btns">
-          <button class="preset-btn" onclick="addPreset('single','Gusset Bag',5,'Stephen Gould','vitaquest')">+ Gusset Bag (5 weeks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Shrink Wrap Jar',4,'Stephen Gould','3pl')">+ Shrink Wrap Jar (4 weeks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Outer Shipper',4,'','3pl')">+ Outer Shipper (4 weeks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Marketing Postcard',2,'','3pl')">+ Postcard (2 weeks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Marketing Booklet',4,'','3pl')">+ Booklet (4 weeks)</button>
-        </div>
-        <div style="font-size:11px;color:#999;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;">Selected Components</div>
-        <div class="selected-comps" id="singleComps"></div>
-      </div>
       <!-- Manufacturing -->
       <div class="mfg-builder">
         <label class="mfg-toggle">
@@ -220,6 +207,15 @@ function diffDays(a,b) { const da=new Date(a); da.setHours(0,0,0,0); const db=ne
 function today()       { const d=new Date(); d.setHours(0,0,0,0); return d; }
 function fmt(d,yr)     { return d.toLocaleDateString('en-US',{month:'short',day:'numeric',...(yr?{year:'numeric'}:{})}); }
 function msClass(days) { if(days<0||days<=14)return 'red'; if(days<=28)return 'amber'; return ''; }
+function compDotColor(c) {
+  const artOverdue = !c.artworkDoneDate && c.daysUntilArtwork < 0;
+  const arriveOverdue = c.daysUntilArrives < 0;
+  if (artOverdue || arriveOverdue) return '#ef4444';
+  const artAtRisk = !c.artworkDoneDate && c.daysUntilArtwork <= 14;
+  const arriveAtRisk = c.daysUntilArrives <= 14;
+  if (artAtRisk || arriveAtRisk) return '#f59e0b';
+  return '#22c55e';
+}
 
 // ══════════════════════════════════════════
 //  UI toggles
@@ -260,8 +256,7 @@ function prefillLaunchDate(sel, targetId) {
   const sku = sel.value;
   const date = SKU_LAUNCH_DATES[sku];
   document.getElementById(targetId).value = date || '';
-  const preset = SKU_COMPONENTS[sku];
-  comps.single = preset ? preset.map(c => ({ confirmedEta: null, artworkDoneDate: null, ...c })) : [];
+  comps.single = SKU_COMPONENTS['Metabolic'].map(c => ({ confirmedEta: null, artworkDoneDate: null, ...c }));
   renderChips('single');
   const opts = SKU_MFG_OPTS[sku] || {};
   document.getElementById('extPreBottle').checked = opts.externalPreBottle || false;
@@ -427,11 +422,11 @@ function statusPill(d) {
 // ══════════════════════════════════════════
 // Simplified 3-hue palette
 const GANTT_C = {
-  artwork:  '#bfdbfe',  // light blue  — artwork phase
-  pkgVQ:    '#3b82f6',  // blue        — packaging production (all destinations)
-  pkg3PL:   '#3b82f6',  // blue        — same as VQ; destination shown via label
-  mfg:      '#0891b2',  // teal        — supplement mfg + testing (single color)
-  test:     '#0891b2',  // teal        — same as mfg
+  artwork:  '#a78bfa',  // violet      — artwork phase
+  pkgVQ:    '#3b82f6',  // blue        — packaging → Vitaquest
+  pkg3PL:   '#f59e0b',  // amber       — packaging → 3PL
+  mfg:      '#0891b2',  // teal        — supplement mfg
+  test:     '#059669',  // green       — testing phases
   transit:  '#94a3b8',  // gray        — 3PL transit
   launch:   '#e74c3c',  // red         — launch marker & today line
   today:    '#e74c3c',
@@ -579,7 +574,6 @@ function calculateSingle() {
 
   // Packaging component sections
   const compSections = r.components.map((c,i) => {
-    const color       = '#3b82f6';
     const vendorLabel = c.vendor || 'Vendor';
     const is3pl       = c.deliverTo === '3pl';
     const artCls      = msClass(c.daysUntilArtwork);
@@ -592,7 +586,7 @@ function calculateSingle() {
     return `
       <div class="comp-section">
         <div class="comp-section-head">
-          <div class="comp-dot" style="background:${color}"></div>${c.name}
+          <div class="comp-dot" style="background:${compDotColor(c)}"></div>${c.name}
           <span style="font-weight:400;color:#aaa;">${c.weeks}-wk lead time</span>
         </div>
         <div class="ms-grid">
@@ -603,9 +597,8 @@ function calculateSingle() {
           <div class="ms ${artCls}" title="Send to ${vendorLabel||'vendor'}${c.daysUntilArtwork>=0?' — '+c.daysUntilArtwork+'d from today':' — OVERDUE'}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div></div>`
           }
           <div class="ms" title="${prodNote}"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div></div>
-          ${is3pl ? `<div class="ms ${c.confirmedEta?(()=>{const d=Math.round((c.confirmedEta-c.arrives)/86400000);return d>0?'red':'green';})():''}"><div class="ms-label">ETA to 3PL${c.confirmedEta?' 🔒':''}</div><div class="ms-date">${c.confirmedEta?fmt(c.confirmedEta,true):'—'}</div></div>` : ''}
+          ${is3pl ? `<div class="ms ${c.confirmedEta?(()=>{const d=Math.round((c.confirmedEta-c.arrives)/86400000);return d>0?'red':'green';})():''}"><div class="ms-label">ETA to 3PL${c.confirmedEta?' 🔒':''}</div><div class="ms-date">${c.confirmedEta?fmt(c.confirmedEta,true):fmt(c.arrives,true)}</div></div>` : ''}
           <div class="ms" title="${arriveNote}"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div></div>
-          ${!is3pl && c.confirmedEta ? (()=>{ const d=Math.round((c.confirmedEta-c.arrives)/86400000); return `<div class="ms ${d>0?'red':'green'}" title="${d>0?'⚠ '+d+'d late vs. need-by':d<0?'✓ '+Math.abs(d)+'d early':'✓ On schedule'}"><div class="ms-label">Delivered to Vitaquest 🔒</div><div class="ms-date">${fmt(c.confirmedEta,true)}</div></div>`; })() : ''}
         </div>
       </div>`;
   }).join('');
@@ -747,8 +740,9 @@ function buildGantt(skuList) {
   const todayDate = today();
 
   // Row heights per SKU
+  const showSkuBand = skuList.length > 1;
   function skuRowH(r) {
-    return SKU_HDR_H + r.components.length * COMP_H + (r.mfgTrack ? MFG_H + TEST_H : 0) + VQ_H;
+    return (showSkuBand ? SKU_HDR_H : 0) + r.components.length * COMP_H + (r.mfgTrack ? MFG_H + TEST_H : 0) + VQ_H;
   }
 
   // Date range
@@ -756,7 +750,7 @@ function buildGantt(skuList) {
     ...s.r.components.map(c => c.designStart), s.r.launch,
     ...(s.r.mfgTrack ? [s.r.mfgTrack.suppMfgStart] : []),
   ]);
-  const minDate   = subDays(new Date(Math.min(...allDates.map(d=>d.getTime()))), 10);
+  const minDate   = subDays(today(), 14);
   const maxDate   = addDays(new Date(Math.max(...allDates.map(d=>d.getTime()))), 3);
   const totalDays = diffDays(maxDate, minDate) || 1;
 
@@ -795,10 +789,12 @@ function buildGantt(skuList) {
   o += `<text x="8" y="24" font-size="11" fill="#aab" font-weight="700">${skuHeaderName}</text>`;
   // Center legend block across the chart area
   const legHdr = [
-    ['Artwork','#bfdbfe',42],
-    ['Packaging','#3b82f6',52],
-    ['Supplement Mfg + Testing','#0891b2',134],
-    ['3PL Transit','#94a3b8',60],
+    ['Artwork','#a78bfa',42],
+    ['Pkg → VQ','#3b82f6',54],
+    ['Pkg → 3PL','#f59e0b',56],
+    ['Supplement Mfg','#0891b2',90],
+    ['Testing','#059669',44],
+    ['3PL Transit','#94a3b8',62],
   ];
   const swW = 11, swGap = 5, itemGap = 24;
   const totalLegW = legHdr.reduce((s,[,,tw]) => s + swW + swGap + tw, 0) + itemGap * (legHdr.length - 1);
@@ -814,9 +810,11 @@ function buildGantt(skuList) {
   skuList.forEach(({name, r}, si) => {
     const rh = skuRowH(r);
     if (si%2===1) o += `<rect x="${LABEL_W}" y="${curY}" width="${CHART_W}" height="${rh}" fill="${GANTT_C.rowAlt}"/>`;
-    // SKU name header band
-    o += `<rect x="0" y="${curY}" width="${SVG_W}" height="${SKU_HDR_H}" fill="#eef1f8"/>`;
-    o += `<text x="8" y="${curY+SKU_HDR_H-5}" font-size="10" fill="#1a1a2e" font-weight="700">${name}</text>`;
+    // SKU name header band (only for multi-SKU)
+    if (showSkuBand) {
+      o += `<rect x="0" y="${curY}" width="${SVG_W}" height="${SKU_HDR_H}" fill="#eef1f8"/>`;
+      o += `<text x="8" y="${curY+SKU_HDR_H-5}" font-size="10" fill="#1a1a2e" font-weight="700">${name}</text>`;
+    }
 
     // Packaging component rows
     r.components.forEach((comp,ci) => {
@@ -934,16 +932,15 @@ function buildActiveCompSections(r) {
     })() : '';
     return `<div class="comp-section">
       <div class="comp-section-head">
-        <div class="comp-dot" style="background:#3b82f6"></div>${c.name}
+        <div class="comp-dot" style="background:${compDotColor(c)}"></div>${c.name}
         <span style="font-weight:400;color:#aaa;">${c.weeks}-wk lead time</span>
         ${c===r.critical?'<span style="background:#fde8e8;color:#e74c3c;border-radius:4px;padding:2px 7px;font-size:10px;">CRITICAL PATH</span>':''}
       </div>
       <div class="ms-grid">
         ${artworkTiles}
         <div class="ms" title="${c.weeks} wks lead time"><div class="ms-label">${vendorLabel} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div></div>
-        ${is3pl ? `<div class="ms ${c.confirmedEta?(()=>{const d=Math.round((c.confirmedEta-c.arrives)/86400000);return d>0?'red':'green';})():''}"><div class="ms-label">ETA to 3PL${c.confirmedEta?' 🔒':''}</div><div class="ms-date">${c.confirmedEta?fmt(c.confirmedEta,true):'—'}</div></div>` : ''}
+        ${is3pl ? `<div class="ms ${c.confirmedEta?(()=>{const d=Math.round((c.confirmedEta-c.arrives)/86400000);return d>0?'red':'green';})():''}"><div class="ms-label">ETA to 3PL${c.confirmedEta?' 🔒':''}</div><div class="ms-date">${c.confirmedEta?fmt(c.confirmedEta,true):fmt(c.arrives,true)}</div></div>` : ''}
         <div class="ms"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div></div>
-        ${!is3pl ? etaTile : ''}
       </div>
     </div>`;
   }).join('');
