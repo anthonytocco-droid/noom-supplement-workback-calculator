@@ -756,6 +756,8 @@ function buildGantt(skuList) {
 
   function xOf(d) { return LABEL_W + (diffDays(d,minDate)/totalDays)*CHART_W; }
   function wOf(a,b) { return Math.max(xOf(b)-xOf(a), 2); }
+  function bX(d) { return Math.max(xOf(d), LABEL_W); }
+  function bW(a,b) { return Math.max(Math.min(xOf(b), SVG_W) - bX(a), 0); }
 
   const totalRowH = skuList.reduce((s,{r})=>s+skuRowH(r)+SEP, 0);
   const SVG_H = HDR_H + totalRowH + FOOT_H;
@@ -818,26 +820,28 @@ function buildGantt(skuList) {
 
     // Packaging component rows
     r.components.forEach((comp,ci) => {
-      const rowY  = curY + SKU_HDR_H + ci*COMP_H;
+      const rowY  = curY + (showSkuBand ? SKU_HDR_H : 0) + ci*COMP_H;
       const barY  = rowY + (COMP_H-BAR_H)/2;
       const is3pl = comp.deliverTo==='3pl';
       const prodCol = is3pl ? GANTT_C.pkg3PL : GANTT_C.pkgVQ;
       const lbl   = comp.name.length>16 ? comp.name.substring(0,14)+'..' : comp.name;
       o += `<text x="${LABEL_W-4}" y="${rowY+COMP_H/2+4}" font-size="9" fill="${prodCol}" text-anchor="end" font-weight="700">${lbl}</text>`;
-      // Artwork phase (light blue)
-      o += `<rect x="${xOf(comp.designStart)}" y="${barY}" width="${wOf(comp.designStart,comp.printReady)}" height="${BAR_H}" rx="3" fill="${GANTT_C.artwork}"/>`;
-      // Production phase
-      const pX = xOf(comp.printReady);
-      const pW = wOf(comp.printReady, comp.arrives);
-      o += `<rect x="${pX}" y="${barY}" width="${pW}" height="${BAR_H}" rx="3" fill="${prodCol}"/>`;
-      o += `<line x1="${pX}" y1="${barY}" x2="${pX}" y2="${barY+BAR_H}" stroke="#fff" stroke-width="1.5"/>`;
+      // Artwork phase — clamped so it never overlaps label area
+      const aX = bX(comp.designStart), aW = bW(comp.designStart, comp.printReady);
+      if (aW > 0) o += `<rect x="${aX}" y="${barY}" width="${aW}" height="${BAR_H}" rx="3" fill="${GANTT_C.artwork}"/>`;
+      // Production phase — clamped
+      const pX = bX(comp.printReady), pW = bW(comp.printReady, comp.arrives);
+      if (pW > 0) {
+        o += `<rect x="${pX}" y="${barY}" width="${pW}" height="${BAR_H}" rx="3" fill="${prodCol}"/>`;
+        if (xOf(comp.printReady) >= LABEL_W) o += `<line x1="${pX}" y1="${barY}" x2="${pX}" y2="${barY+BAR_H}" stroke="#fff" stroke-width="1.5"/>`;
+      }
       if (is3pl) {
         const ax = xOf(comp.arrives);
-        o += `<rect x="${ax-4}" y="${barY}" width="8" height="${BAR_H}" rx="1" fill="#b45309"/>`;
+        if (ax >= LABEL_W) o += `<rect x="${ax-4}" y="${barY}" width="8" height="${BAR_H}" rx="1" fill="#b45309"/>`;
       }
     });
 
-    const baseY = curY + SKU_HDR_H + r.components.length*COMP_H;
+    const baseY = curY + (showSkuBand ? SKU_HDR_H : 0) + r.components.length*COMP_H;
 
     if (r.mfgTrack) {
       const t = r.mfgTrack;
@@ -846,10 +850,12 @@ function buildGantt(skuList) {
       const mfgRowY = baseY;
       const mfgBarY = mfgRowY + (MFG_H-BAR_H)/2;
       o += `<text x="${LABEL_W-4}" y="${mfgRowY+MFG_H/2+4}" font-size="9" fill="${GANTT_C.mfg}" text-anchor="end" font-weight="700">Supplement Mfg</text>`;
-      // mfg bar
-      o += `<rect x="${xOf(t.suppMfgStart)}" y="${mfgBarY}" width="${wOf(t.suppMfgStart,t.suppMfgComplete)}" height="${BAR_H}" rx="3" fill="${GANTT_C.mfg}" opacity="0.9"/>`;
-      // pre-bottle bar (continuation — dark teal)
-      o += `<rect x="${xOf(t.preBottleStart)}" y="${mfgBarY}" width="${wOf(t.preBottleStart,t.preBottleComplete)}" height="${BAR_H}" rx="3" fill="${GANTT_C.test}"/>`;
+      // mfg bar — clamped
+      const mX = bX(t.suppMfgStart), mW = bW(t.suppMfgStart, t.suppMfgComplete);
+      if (mW > 0) o += `<rect x="${mX}" y="${mfgBarY}" width="${mW}" height="${BAR_H}" rx="3" fill="${GANTT_C.mfg}" opacity="0.9"/>`;
+      // pre-bottle bar — clamped
+      const pbX = bX(t.preBottleStart), pbW = bW(t.preBottleStart, t.preBottleComplete);
+      if (pbW > 0) o += `<rect x="${pbX}" y="${mfgBarY}" width="${pbW}" height="${BAR_H}" rx="3" fill="${GANTT_C.test}"/>`;
       // fill/seal marker (vertical line)
       const fsX = xOf(t.fillSealStart);
       o += `<line x1="${fsX}" y1="${mfgRowY}" x2="${fsX}" y2="${mfgRowY+MFG_H+TEST_H}" stroke="#1a1a2e" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.4"/>`;
