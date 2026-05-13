@@ -740,14 +740,14 @@ function buildGantt(skuList) {
   if (!skuList.length) return '';
 
   const LABEL_W = 122; const SVG_W = 1060; const CHART_W = SVG_W - LABEL_W - 12;
-  const COMP_H = 26;   // per packaging component row
-  const MFG_H  = 26;   // supplement mfg + pre-bottle row
-  const TEST_H = 26;   // in-bottle test row
-  const VQ_H   = 26;   // 3PL/launch row
-  const SEP    = 6;
-  const BAR_H  = 12;
-  const HDR_H  = 38; const FOOT_H = 26;
-  const SKU_HDR_H = 18;
+  const COMP_H = 22;   // per packaging component row
+  const MFG_H  = 22;   // supplement mfg + pre-bottle row
+  const TEST_H = 22;   // in-bottle test row
+  const VQ_H   = 22;   // 3PL/launch row
+  const SEP    = 4;
+  const BAR_H  = 10;
+  const HDR_H  = 36; const FOOT_H = 22;
+  const SKU_HDR_H = 16;
   const todayDate = today();
 
   // Row heights per SKU
@@ -756,13 +756,13 @@ function buildGantt(skuList) {
     return (showSkuBand ? SKU_HDR_H : 0) + r.components.length * COMP_H + (r.mfgTrack ? MFG_H + TEST_H : 0) + VQ_H;
   }
 
-  // Date range
+  // Date range — min is 2 weeks ago, max is launch + 1 day (tight)
   const allDates = skuList.flatMap(s => [
-    ...s.r.components.map(c => c.designStart), s.r.launch,
-    ...(s.r.mfgTrack ? [s.r.mfgTrack.suppMfgStart] : []),
+    ...s.r.components.map(c => c.arrives), s.r.launch,
+    ...(s.r.mfgTrack ? [s.r.mfgTrack.inBottleComplete] : []),
   ]);
   const minDate   = subDays(today(), 14);
-  const maxDate   = addDays(new Date(Math.max(...allDates.map(d=>d.getTime()))), 3);
+  const maxDate   = addDays(new Date(Math.max(...allDates.map(d=>d.getTime()))), 1);
   const totalDays = diffDays(maxDate, minDate) || 1;
 
   function xOf(d) { return LABEL_W + (diffDays(d,minDate)/totalDays)*CHART_W; }
