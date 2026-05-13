@@ -383,6 +383,7 @@ function workback(launchDateStr, components, mfg={enabled:false}) {
     const designStart = subWeeks(printReady, 5);
     const etaDate  = confirmedEta    ? new Date(confirmedEta    + 'T12:00:00') : null;
     const artDone  = artworkDoneDate ? new Date(artworkDoneDate + 'T12:00:00') : null;
+    const shipTestStart = dest !== '3pl' ? subDays(arrives, 7) : null; // VQ-bound: ship test ~1 wk before arrival
     // Smart ETA to 3PL: based on actual artwork progress
     const etaTo3PL = dest === '3pl' ? (() => {
       if (etaDate) return etaDate;                          // user-locked
@@ -392,6 +393,7 @@ function workback(launchDateStr, components, mfg={enabled:false}) {
     })() : null;
     return {
       name, weeks, vendor, deliverTo: dest, arrives, printReady, designStart,
+      shipTestStart,
       daysUntilArtwork: diffDays(printReady, today()),
       daysUntilArrives: diffDays(arrives, today()),
       confirmedEta: etaDate,
@@ -591,7 +593,7 @@ function calculateSingle() {
     const destBadge   = is3pl
       ? `<span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">→ The Pharmacy Hub</span>`
       : `<span style="background:#e0f2fe;color:#0369a1;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">→ Vitaquest</span>`;
-    const arriveLabel = is3pl ? 'Ship Test Start' : 'Arrives at Vitaquest';
+    const arriveLabel = is3pl ? 'Arrives at 3PL' : 'Arrives at Vitaquest';
     const arriveNote  = is3pl ? 'Needed 9 days before launch — independent track' : r.mfgTrack ? 'Fill/seal starts when last VQ component + tested supplement ready' : 'Fill/seal when last component arrives';
     const prodNote    = is3pl ? `${c.weeks} wks — ships direct to 3PL` : `${c.weeks} wks — concurrent w/ supplement mfg`;
     return `
@@ -608,7 +610,8 @@ function calculateSingle() {
           <div class="ms ${artCls}" title="Send to ${vendorLabel||'vendor'}${c.daysUntilArtwork>=0?' — '+c.daysUntilArtwork+'d from today':' — OVERDUE'}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div></div>`
           }
           <div class="ms" title="${prodNote}"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div></div>
-          ${is3pl && c.etaTo3PL ? (()=>{ const late=c.etaTo3PL>c.arrives; const locked=!!c.confirmedEta; return `<div class="ms ${late?'red':c.etaTo3PL<c.arrives?'green':''}"><div class="ms-label">ETA to 3PL${locked?' 🔒':''}</div><div class="ms-date">${fmt(c.etaTo3PL,true)}</div></div>`; })() : ''}
+          ${!is3pl && c.shipTestStart ? `<div class="ms"><div class="ms-label">Ship Test Start</div><div class="ms-date">${fmt(c.shipTestStart,true)}</div></div>` : ''}
+          ${is3pl && c.etaTo3PL ? (()=>{ const late=c.etaTo3PL>c.arrives; const locked=!!c.confirmedEta; return `<div class="ms ${late?'red':''}" style="${!late?'background:#eff6ff;':''}"><div class="ms-label" style="${!late?'color:#2563eb;':''}">ETA to 3PL${locked?' 🔒':''}</div><div class="ms-date" style="${!late?'color:#1d4ed8;':''}">${fmt(c.etaTo3PL,true)}</div></div>`; })() : ''}
           <div class="ms" title="${arriveNote}"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div></div>
         </div>
       </div>`;
@@ -902,7 +905,8 @@ function buildGantt(skuList) {
     const dly = launchRowY + VQ_H/2;
     const ds  = 7;
     o += `<polygon points="${dlx},${dly-ds} ${dlx+ds},${dly} ${dlx},${dly+ds} ${dlx-ds},${dly}" fill="${GANTT_C.launch}"/>`;
-    o += `<text x="${dlx+9}" y="${dly+4}" font-size="9" fill="${GANTT_C.launch}" font-weight="700">${fmt(r.launch)}</text>`;
+    const launchNearEdge = dlx + 52 > SVG_W;
+    o += `<text x="${launchNearEdge ? dlx-ds-3 : dlx+ds+3}" y="${dly+4}" font-size="9" fill="${GANTT_C.launch}" font-weight="700" text-anchor="${launchNearEdge?'end':'start'}">${fmt(r.launch)}</text>`;
 
     o += `<line x1="0" y1="${curY+rh}" x2="${SVG_W}" y2="${curY+rh}" stroke="#ddd" stroke-width="1"/>`;
     curY += rh + SEP;
