@@ -380,6 +380,13 @@ function workback(launchDateStr, components, mfg={enabled:false}) {
     const designStart = subWeeks(printReady, 5);
     const etaDate  = confirmedEta    ? new Date(confirmedEta    + 'T12:00:00') : null;
     const artDone  = artworkDoneDate ? new Date(artworkDoneDate + 'T12:00:00') : null;
+    // Smart ETA to 3PL: based on actual artwork progress
+    const etaTo3PL = dest === '3pl' ? (() => {
+      if (etaDate) return etaDate;                          // user-locked
+      if (artDone) return addDays(artDone, weeks * 7);     // artwork done: count from that date
+      if (diffDays(printReady, today()) < 0) return addDays(today(), weeks * 7); // overdue: count from today
+      return new Date(arrives);                             // on track
+    })() : null;
     return {
       name, weeks, vendor, deliverTo: dest, arrives, printReady, designStart,
       daysUntilArtwork: diffDays(printReady, today()),
@@ -387,6 +394,7 @@ function workback(launchDateStr, components, mfg={enabled:false}) {
       confirmedEta: etaDate,
       etaDelta: etaDate ? diffDays(etaDate, arrives) : null,
       artworkDoneDate: artDone,
+      etaTo3PL,
     };
   });
 
@@ -597,7 +605,7 @@ function calculateSingle() {
           <div class="ms ${artCls}" title="Send to ${vendorLabel||'vendor'}${c.daysUntilArtwork>=0?' — '+c.daysUntilArtwork+'d from today':' — OVERDUE'}"><div class="ms-label">Print-Ready Artwork Due</div><div class="ms-date">${fmt(c.printReady,true)}</div></div>`
           }
           <div class="ms" title="${prodNote}"><div class="ms-label">${vendorLabel||'Vendor'} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div></div>
-          ${is3pl ? `<div class="ms ${c.confirmedEta?(()=>{const d=Math.round((c.confirmedEta-c.arrives)/86400000);return d>0?'red':'green';})():''}"><div class="ms-label">ETA to 3PL${c.confirmedEta?' 🔒':''}</div><div class="ms-date">${c.confirmedEta?fmt(c.confirmedEta,true):fmt(c.arrives,true)}</div></div>` : ''}
+          ${is3pl && c.etaTo3PL ? (()=>{ const late=c.etaTo3PL>c.arrives; const locked=!!c.confirmedEta; return `<div class="ms ${late?'red':c.etaTo3PL<c.arrives?'green':''}"><div class="ms-label">ETA to 3PL${locked?' 🔒':''}</div><div class="ms-date">${fmt(c.etaTo3PL,true)}</div></div>`; })() : ''}
           <div class="ms" title="${arriveNote}"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div></div>
         </div>
       </div>`;
@@ -825,7 +833,8 @@ function buildGantt(skuList) {
       const is3pl = comp.deliverTo==='3pl';
       const prodCol = is3pl ? GANTT_C.pkg3PL : GANTT_C.pkgVQ;
       const lbl   = comp.name.length>16 ? comp.name.substring(0,14)+'..' : comp.name;
-      o += `<text x="${LABEL_W-4}" y="${rowY+COMP_H/2+4}" font-size="9" fill="${prodCol}" text-anchor="end" font-weight="700">${lbl}</text>`;
+      o += `<rect x="0" y="${rowY}" width="${LABEL_W}" height="${COMP_H}" fill="#fff"/>`;
+      o += `<text x="${LABEL_W-4}" y="${rowY+COMP_H/2+4}" font-size="9" fill="#334155" text-anchor="end" font-weight="600">${lbl}</text>`;
       // Artwork phase — clamped so it never overlaps label area
       const aX = bX(comp.designStart), aW = bW(comp.designStart, comp.printReady);
       if (aW > 0) o += `<rect x="${aX}" y="${barY}" width="${aW}" height="${BAR_H}" rx="3" fill="${GANTT_C.artwork}"/>`;
@@ -849,7 +858,8 @@ function buildGantt(skuList) {
       // Supplement Mfg + Pre-bottle row
       const mfgRowY = baseY;
       const mfgBarY = mfgRowY + (MFG_H-BAR_H)/2;
-      o += `<text x="${LABEL_W-4}" y="${mfgRowY+MFG_H/2+4}" font-size="9" fill="${GANTT_C.mfg}" text-anchor="end" font-weight="700">Supplement Mfg</text>`;
+      o += `<rect x="0" y="${mfgRowY}" width="${LABEL_W}" height="${MFG_H}" fill="#fff"/>`;
+      o += `<text x="${LABEL_W-4}" y="${mfgRowY+MFG_H/2+4}" font-size="9" fill="#334155" text-anchor="end" font-weight="600">Supplement Mfg</text>`;
       // mfg bar — clamped
       const mX = bX(t.suppMfgStart), mW = bW(t.suppMfgStart, t.suppMfgComplete);
       if (mW > 0) o += `<rect x="${mX}" y="${mfgBarY}" width="${mW}" height="${BAR_H}" rx="3" fill="${GANTT_C.mfg}" opacity="0.9"/>`;
@@ -864,13 +874,15 @@ function buildGantt(skuList) {
       // In-bottle testing row (dark teal)
       const testRowY = baseY + MFG_H;
       const testBarY = testRowY + (TEST_H-BAR_H)/2;
-      o += `<text x="${LABEL_W-4}" y="${testRowY+TEST_H/2+4}" font-size="9" fill="${GANTT_C.test}" text-anchor="end" font-weight="700">In-Bottle Test</text>`;
+      o += `<rect x="0" y="${testRowY}" width="${LABEL_W}" height="${TEST_H}" fill="#fff"/>`;
+      o += `<text x="${LABEL_W-4}" y="${testRowY+TEST_H/2+4}" font-size="9" fill="#334155" text-anchor="end" font-weight="600">In-Bottle Test</text>`;
       o += `<rect x="${xOf(t.inBottleStart)}" y="${testBarY}" width="${wOf(t.inBottleStart,t.inBottleComplete)}" height="${BAR_H}" rx="3" fill="${GANTT_C.test}"/>`;
 
       // 3PL/launch row (slate)
       const tplRowY = baseY + MFG_H + TEST_H;
       const tplBarY = tplRowY + (VQ_H-BAR_H)/2;
-      o += `<text x="${LABEL_W-4}" y="${tplRowY+VQ_H/2+4}" font-size="9" fill="${GANTT_C.transit}" text-anchor="end" font-weight="700">3PL Transit</text>`;
+      o += `<rect x="0" y="${tplRowY}" width="${LABEL_W}" height="${VQ_H}" fill="#fff"/>`;
+      o += `<text x="${LABEL_W-4}" y="${tplRowY+VQ_H/2+4}" font-size="9" fill="#334155" text-anchor="end" font-weight="600">3PL Transit</text>`;
       o += `<rect x="${xOf(r.shipTo3PL)}" y="${tplBarY}" width="${wOf(r.shipTo3PL,r.threePlReceive)}" height="${BAR_H}" rx="3" fill="${GANTT_C.transit}"/>`;
     } else {
       // No mfg: simple Vitaquest+3PL row
@@ -945,7 +957,7 @@ function buildActiveCompSections(r) {
       <div class="ms-grid">
         ${artworkTiles}
         <div class="ms" title="${c.weeks} wks lead time"><div class="ms-label">${vendorLabel} Production</div><div class="ms-date">${fmt(c.printReady)} → ${fmt(c.arrives)}</div></div>
-        ${is3pl ? `<div class="ms ${c.confirmedEta?(()=>{const d=Math.round((c.confirmedEta-c.arrives)/86400000);return d>0?'red':'green';})():''}"><div class="ms-label">ETA to 3PL${c.confirmedEta?' 🔒':''}</div><div class="ms-date">${c.confirmedEta?fmt(c.confirmedEta,true):fmt(c.arrives,true)}</div></div>` : ''}
+        ${is3pl && c.etaTo3PL ? (()=>{ const late=c.etaTo3PL>c.arrives; const locked=!!c.confirmedEta; return `<div class="ms ${late?'red':c.etaTo3PL<c.arrives?'green':''}"><div class="ms-label">ETA to 3PL${locked?' 🔒':''}</div><div class="ms-date">${fmt(c.etaTo3PL,true)}</div></div>`; })() : ''}
         <div class="ms"><div class="ms-label">${arriveLabel}</div><div class="ms-date">${fmt(c.arrives,true)}</div></div>
       </div>
     </div>`;
