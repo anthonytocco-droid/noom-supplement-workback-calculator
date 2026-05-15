@@ -153,27 +153,27 @@
       </div>
       <!-- Manufacturing -->
       <div class="mfg-builder">
-        <label class="mfg-toggle">
-          <input type="checkbox" id="mfgEnabled" onchange="toggleMfg('single')" checked />
-          Vitaquest Supplement Manufacturing
-        </label>
-        <div class="mfg-options" id="mfgOptions">
-          <div class="mfg-row">
-            <div class="field">
-              <label>Mfg Lead Time (6–8 weeks)</label>
-              <input type="number" id="mfgWeeks" value="7" min="1" max="52" style="min-width:0;width:80px;" />
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <label class="mfg-toggle" style="margin:0;">
+            <input type="checkbox" id="mfgEnabled" onchange="toggleMfg('single')" checked />
+            Vitaquest Supplement Manufacturing
+          </label>
+          <div class="mfg-options" id="mfgOptions" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:0;">
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;">Lead Time</span>
+              <input type="number" id="mfgWeeks" value="7" min="1" max="52" style="width:52px;padding:4px 8px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:14px;font-family:inherit;color:#0f172a;text-align:center;" />
+              <span style="font-size:11px;color:#9ca3af;">wks</span>
             </div>
-          </div>
-          <div class="test-grid">
-            <div class="test-section">
-              <div class="test-title">Pre-Bottling 3rd Party Testing</div>
-              <div class="test-row"><span class="req-badge">Required</span><span>Vitaquest — 1 week</span></div>
-              <div class="test-row opt"><label><input type="checkbox" id="extPreBottle" /><span class="opt-badge">Optional</span></label><span>External lab — +2 weeks</span></div>
-            </div>
-            <div class="test-section">
-              <div class="test-title">In-Bottle 3rd Party Testing</div>
-              <div class="test-row"><span class="req-badge">Required</span><span>Vitaquest — 1 week</span></div>
-              <div class="test-row opt"><label><input type="checkbox" id="extInBottle" /><span class="opt-badge">Optional</span></label><span>External lab — +2 weeks</span></div>
+            <div style="display:flex;align-items:center;gap:12px;font-size:12px;color:#374151;">
+              <span style="color:#9ca3af;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Ext. Lab</span>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+                <input type="checkbox" id="extPreBottle" style="width:13px;height:13px;accent-color:#7c3aed;cursor:pointer;" />
+                <span>Pre-bottle +2wk</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+                <input type="checkbox" id="extInBottle" style="width:13px;height:13px;accent-color:#7c3aed;cursor:pointer;" />
+                <span>In-bottle +2wk</span>
+              </label>
             </div>
           </div>
         </div>
@@ -771,9 +771,11 @@ function buildGantt(skuList) {
     return (showSkuBand ? SKU_HDR_H : 0) + r.components.length * COMP_H + (r.mfgTrack ? MFG_H + TEST_H : 0);
   }
 
-  // Date range — min is 2 weeks ago, max is launch + 1 day (tight)
+  // Date range — min is 2 weeks ago, max covers launch + any late ETAs
   const allDates = skuList.flatMap(s => [
-    ...s.r.components.map(c => c.arrives), s.r.launch,
+    ...s.r.components.map(c => c.arrives),
+    ...s.r.components.filter(c => c.etaTo3PL).map(c => c.etaTo3PL),
+    s.r.launch,
     ...(s.r.mfgTrack ? [s.r.mfgTrack.inBottleComplete] : []),
   ]);
   const minDate   = subDays(today(), 14);
@@ -866,6 +868,13 @@ function buildGantt(skuList) {
       if (arrX >= LABEL_W && arrX <= SVG_W) {
         const tickCol = is3pl ? '#d97706' : '#1d4ed8';
         o += `<line x1="${arrX}" y1="${barY-2}" x2="${arrX}" y2="${barY+BAR_H+2}" stroke="${tickCol}" stroke-width="2" opacity="0.7"/>`;
+      }
+      // For late 3PL components: red overrun bar from need-by to actual ETA
+      if (is3pl && comp.etaTo3PL && comp.etaTo3PL > comp.arrives) {
+        const lX = arrX, lW = Math.max(xOf(comp.etaTo3PL) - lX, 2);
+        if (lX <= SVG_W) o += `<rect x="${lX}" y="${barY}" width="${Math.min(lW, SVG_W - lX)}" height="${BAR_H}" rx="3" fill="#ef4444" opacity="0.85"/>`;
+        const etaLabelX = Math.min(xOf(comp.etaTo3PL) + 3, SVG_W - 30);
+        o += `<text x="${etaLabelX}" y="${barY + BAR_H - 1}" font-size="8" fill="#dc2626" font-weight="700">${fmt(comp.etaTo3PL)}</text>`;
       }
       // For VQ-bound components: faint "at VQ waiting" bar from arrival to fill/seal start
       if (!is3pl && r.mfgTrack) {
