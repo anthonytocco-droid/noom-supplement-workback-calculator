@@ -768,7 +768,7 @@ function buildGantt(skuList) {
   // Row heights per SKU
   const showSkuBand = skuList.length > 1;
   function skuRowH(r) {
-    return (showSkuBand ? SKU_HDR_H : 0) + r.components.length * COMP_H + (r.mfgTrack ? MFG_H + TEST_H : 0) + VQ_H;
+    return (showSkuBand ? SKU_HDR_H : 0) + r.components.length * COMP_H + (r.mfgTrack ? MFG_H + TEST_H : 0);
   }
 
   // Date range — min is 2 weeks ago, max is launch + 1 day (tight)
@@ -822,7 +822,6 @@ function buildGantt(skuList) {
     ['Pkg → 3PL','#f59e0b',56],
     ['Supplement Mfg','#0891b2',90],
     ['Testing','#059669',44],
-    ['3PL Transit','#94a3b8',62],
   ];
   const swW = 11, swGap = 5, itemGap = 24;
   const totalLegW = legHdr.reduce((s,[,,tw]) => s + swW + swGap + tw, 0) + itemGap * (legHdr.length - 1);
@@ -905,12 +904,6 @@ function buildGantt(skuList) {
       o += `<text x="${LABEL_W-4}" y="${testRowY+TEST_H/2+4}" font-size="9" fill="#334155" text-anchor="end" font-weight="600">In-Bottle Test</text>`;
       o += `<rect x="${xOf(t.inBottleStart)}" y="${testBarY}" width="${wOf(t.inBottleStart,t.inBottleComplete)}" height="${BAR_H}" rx="3" fill="${GANTT_C.test}"/>`;
 
-      // 3PL/launch row (slate)
-      const tplRowY = baseY + MFG_H + TEST_H;
-      const tplBarY = tplRowY + (VQ_H-BAR_H)/2;
-      o += `<rect x="0" y="${tplRowY}" width="${LABEL_W}" height="${VQ_H}" fill="#fff"/>`;
-      o += `<text x="${LABEL_W-4}" y="${tplRowY+VQ_H/2+4}" font-size="9" fill="#334155" text-anchor="end" font-weight="600">3PL Transit</text>`;
-      o += `<rect x="${xOf(r.shipTo3PL)}" y="${tplBarY}" width="${wOf(r.shipTo3PL, r.launch)}" height="${BAR_H}" rx="3" fill="${GANTT_C.transit}"/>`;
     } else {
       // No mfg: simple Vitaquest+3PL row
       const vqRowY = baseY;
@@ -920,10 +913,10 @@ function buildGantt(skuList) {
       o += `<rect x="${xOf(r.productReady)}" y="${vqBarY}" width="${wOf(r.productReady,r.threePlReceive)}" height="${BAR_H}" rx="3" fill="${GANTT_C.transit}"/>`;
     }
 
-    // Launch diamond (on bottom row of SKU)
-    const launchRowY = baseY + (r.mfgTrack ? MFG_H+TEST_H : 0);
+    // Launch diamond (on In-Bottle Test row or last row)
+    const launchRowY = baseY + (r.mfgTrack ? MFG_H : 0);
     const dlx = xOf(r.launch);
-    const dly = launchRowY + VQ_H/2;
+    const dly = launchRowY + (r.mfgTrack ? TEST_H : VQ_H) / 2;
     const ds  = 7;
     o += `<polygon points="${dlx},${dly-ds} ${dlx+ds},${dly} ${dlx},${dly+ds} ${dlx-ds},${dly}" fill="${GANTT_C.launch}"/>`;
     const launchNearEdge = dlx + 52 > SVG_W;
