@@ -151,6 +151,19 @@
           Add multiple SKUs
         </label>
       </div>
+      <!-- Packaging -->
+      <div class="comp-builder">
+        <div class="comp-builder-title">Packaging Components</div>
+        <div class="preset-btns">
+          <button class="preset-btn" onclick="addPreset('single','Gusset Bag',5,'Stephen Gould','vitaquest')">+ Gusset Bag (5 wks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Shrink Wrap Jar',4,'Stephen Gould','3pl')">+ Shrink Wrap Jar (4 wks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Outer Shipper',4,'','3pl')">+ Outer Shipper (4 wks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Marketing Postcard',2,'','3pl')">+ Postcard (2 wks)</button>
+          <button class="preset-btn" onclick="addPreset('single','Marketing Booklet',4,'','3pl')">+ Booklet (4 wks)</button>
+        </div>
+        <div style="font-size:11px;color:#9ca3af;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Selected Components</div>
+        <div class="selected-comps" id="singleComps"></div>
+      </div>
       <!-- Manufacturing -->
       <div class="mfg-builder">
         <label class="mfg-toggle">
