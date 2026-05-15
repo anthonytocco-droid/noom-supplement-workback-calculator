@@ -86,7 +86,7 @@
     .ms { background: #fff; padding: 14px 20px; border-right: 1px solid #f1f5f9; }
     .ms:last-child { border-right: none; }
     .ms-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; margin-bottom: 5px; }
-    .ms-date { font-size: 17px; font-weight: 700; color: #0f172a; letter-spacing: -0.4px; }
+    .ms-date { font-size: 14px; font-weight: 700; color: #0f172a; letter-spacing: -0.2px; }
     .ms-note { display: none; }
     .ms { cursor: default; }
     .ms.green { background: #f0fdf4; } .ms.green .ms-date { color: #16a34a; }
@@ -212,9 +212,10 @@ function today()       { const d=new Date(); d.setHours(0,0,0,0); return d; }
 function fmt(d,yr)     { return d.toLocaleDateString('en-US',{month:'short',day:'numeric',...(yr?{year:'numeric'}:{})}); }
 function msClass(days) { if(days<0||days<=14)return 'red'; if(days<=28)return 'amber'; return ''; }
 function compDotColor(c) {
+  // Already arrived = green regardless of anything else
+  if (c.daysUntilArrives < 0) return '#22c55e';
   const artOverdue = !c.artworkDoneDate && c.daysUntilArtwork < 0;
-  const arriveOverdue = c.daysUntilArrives < 0;
-  if (artOverdue || arriveOverdue) return '#ef4444';
+  if (artOverdue) return '#ef4444';
   const artAtRisk = !c.artworkDoneDate && c.daysUntilArtwork <= 14;
   const arriveAtRisk = c.daysUntilArrives <= 14;
   if (artAtRisk || arriveAtRisk) return '#f59e0b';
