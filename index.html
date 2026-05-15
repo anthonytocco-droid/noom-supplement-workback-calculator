@@ -789,7 +789,7 @@ function buildGantt(skuList) {
   const totalRowH = skuList.reduce((s,{r})=>s+skuRowH(r)+SEP, 0);
   const SVG_H = HDR_H + totalRowH + FOOT_H;
 
-  let o = `<svg viewBox="0 0 ${SVG_W} ${SVG_H}" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">`;
+  let o = `<svg viewBox="0 0 ${SVG_W} ${SVG_H}" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">`;
   o += `<rect width="${SVG_W}" height="${SVG_H}" fill="#fff"/>`;
 
   // Weekly grid
@@ -863,6 +863,10 @@ function buildGantt(skuList) {
         o += `<rect x="${pX}" y="${barY}" width="${pW}" height="${BAR_H}" rx="3" fill="${prodCol}"/>`;
         if (xOf(comp.printReady) >= LABEL_W) o += `<line x1="${pX}" y1="${barY}" x2="${pX}" y2="${barY+BAR_H}" stroke="#fff" stroke-width="1.5"/>`;
       }
+      // Faint "at destination / waiting" extension from arrival to launch
+      const waitX = Math.max(bX(comp.arrives), LABEL_W);
+      const waitW = Math.max(Math.min(xOf(r.launch), SVG_W) - waitX, 0);
+      if (waitW > 2) o += `<rect x="${waitX}" y="${barY + Math.round(BAR_H*0.3)}" width="${waitW}" height="${Math.round(BAR_H*0.4)}" rx="2" fill="${prodCol}" opacity="0.13"/>`;
       if (is3pl) {
         const ax = xOf(comp.arrives);
         if (ax >= LABEL_W) o += `<rect x="${ax-4}" y="${barY}" width="8" height="${BAR_H}" rx="1" fill="#b45309"/>`;
