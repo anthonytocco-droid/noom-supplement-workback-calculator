@@ -151,19 +151,6 @@
           Add multiple SKUs
         </label>
       </div>
-      <!-- Packaging -->
-      <div class="comp-builder">
-        <div class="comp-builder-title">Packaging Components</div>
-        <div class="preset-btns">
-          <button class="preset-btn" onclick="addPreset('single','Gusset Bag',5,'Stephen Gould','vitaquest')">+ Gusset Bag (5 wks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Shrink Wrap Jar',4,'Stephen Gould','3pl')">+ Shrink Wrap Jar (4 wks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Outer Shipper',4,'','3pl')">+ Outer Shipper (4 wks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Marketing Postcard',2,'','3pl')">+ Postcard (2 wks)</button>
-          <button class="preset-btn" onclick="addPreset('single','Marketing Booklet',4,'','3pl')">+ Booklet (4 wks)</button>
-        </div>
-        <div style="font-size:11px;color:#9ca3af;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Selected Components</div>
-        <div class="selected-comps" id="singleComps"></div>
-      </div>
       <!-- Manufacturing -->
       <div class="mfg-builder">
         <label class="mfg-toggle">
@@ -268,12 +255,28 @@ const SKU_MFG_OPTS = {
   'Metabolic': { externalPreBottle: true, externalInBottle: false },
   'Vitality':  { externalPreBottle: true, externalInBottle: false },
 };
+
+// Default packaging components for every SKU (no booklet)
+const DEFAULT_COMPONENTS = [
+  { name: 'Gusset Bag',         weeks: 5, vendor: 'Stephen Gould', deliverTo: 'vitaquest' },
+  { name: 'Shrink Wrap Jar',    weeks: 4, vendor: 'Stephen Gould', deliverTo: '3pl' },
+  { name: 'Outer Shipper',      weeks: 4, vendor: '',              deliverTo: '3pl' },
+  { name: 'Marketing Postcard', weeks: 2, vendor: '',              deliverTo: '3pl' },
+];
+
+// Returns components for a given SKU, merging SKU-specific overrides onto defaults
+function getComponents(skuName) {
+  const overrides = SKU_COMPONENTS[skuName] || [];
+  return DEFAULT_COMPONENTS.map(def => {
+    const ov = overrides.find(o => o.name === def.name) || {};
+    return { confirmedEta: null, artworkDoneDate: null, ...def, ...ov };
+  });
+}
+
 function prefillLaunchDate(sel, targetId) {
   const sku = sel.value;
   const date = SKU_LAUNCH_DATES[sku];
   document.getElementById(targetId).value = date || '';
-  comps.single = SKU_COMPONENTS['Metabolic'].map(c => ({ confirmedEta: null, artworkDoneDate: null, ...c }));
-  renderChips('single');
   const opts = SKU_MFG_OPTS[sku] || {};
   document.getElementById('extPreBottle').checked = opts.externalPreBottle || false;
   document.getElementById('extInBottle').checked  = opts.externalInBottle  || false;
@@ -577,12 +580,11 @@ function calculateSingle() {
   const name     = document.getElementById('skuName').value.trim() || 'SKU';
   const launchVal= document.getElementById('launchDate').value;
   if (!launchVal) { alert('Select a launch date.'); return; }
-  if (!comps.single.length) { alert('Add at least one packaging component.'); return; }
   const alsBody = document.getElementById('alsBody');
   if (alsBody) { alsBody.style.display = 'none'; const arr = document.querySelector('.als-arrow'); if (arr) arr.textContent = '▶'; }
 
   const mfg = getMfgOpts('single');
-  const r   = workback(launchVal, comps.single, mfg);
+  const r   = workback(launchVal, getComponents(name), mfg);
   const [stLabel, stCls] = statusPill(r.daysToLaunch);
 
   // Alerts
@@ -679,10 +681,7 @@ function addToPortfolio() {
   const name     = document.getElementById('skuName').value.trim() || 'SKU';
   const launchVal= document.getElementById('launchDate').value;
   if (!launchVal){ alert('Select a launch date.'); return; }
-  if (!comps.single.length) { alert('Add at least one packaging component.'); return; }
-  portfolio.push({ name, launchVal, components:[...comps.single], mfg: getMfgOpts('single') });
-  comps.single = [];
-  renderChips('single');
+  portfolio.push({ name, launchVal, components: getComponents(name), mfg: getMfgOpts('single') });
   renderPortfolioList();
   document.getElementById('skuName').value = '';
   document.getElementById('launchDate').value = '';
