@@ -79,8 +79,9 @@
     /* Milestone sections */
     .comp-section { border-bottom: 1px solid #f1f5f9; }
     .comp-section:last-child { border-bottom: none; }
-    .comp-section-head { padding: 10px 22px; background: #f8fafc; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid #f1f5f9; }
-    .comp-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .comp-section-head { padding: 10px 22px; background: #f8fafc; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #0f172a; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid #f1f5f9; }
+    .comp-section-head .comp-sub-label { font-size: 11px; font-weight: 500; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px; }
+    .comp-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
     .ms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); }
     .ms { background: #fff; padding: 14px 20px; border-right: 1px solid #f1f5f9; }
     .ms:last-child { border-right: none; }
@@ -615,7 +616,7 @@ function calculateSingle() {
       <div class="comp-section">
         <div class="comp-section-head">
           <div class="comp-dot" style="background:${compDotColor(c)}"></div>${c.name}
-          <span style="font-weight:400;color:#aaa;">${c.weeks}-wk lead time</span>
+          <span class="comp-sub-label">${c.weeks}-wk lead time</span>
         </div>
         <div class="ms-grid">
           ${c.artworkDoneDate
