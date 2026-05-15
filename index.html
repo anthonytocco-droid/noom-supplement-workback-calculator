@@ -7,10 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #f1f5f9; color: #0f172a; font-size: 14px; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #f1f5f9; color: #0f172a; font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
 
-    header { background: #0f172a; color: #fff; padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
-    header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+    header { background: #0f172a; color: #fff; padding: 15px 32px; display: flex; align-items: center; gap: 16px; }
+    header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.4px; }
     header span { font-size: 12px; color: #94a3b8; display: block; margin-top: 2px; }
 
     .main { max-width: 1220px; margin: 24px auto; padding: 0 24px; }
@@ -29,9 +29,9 @@
     /* Inputs */
     .input-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
     .field { display: flex; flex-direction: column; gap: 5px; }
-    .field label { font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.4px; }
-    .field input, .field select { padding: 9px 12px; border: 1.5px solid #dde; border-radius: 6px; font-size: 14px; color: #1a1a2e; background: #fafbfc; outline: none; min-width: 150px; }
-    .field input:focus, .field select:focus { border-color: #4a90d9; background: #fff; }
+    .field label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .field input, .field select { padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 15px; font-family: inherit; color: #0f172a; background: #fff; outline: none; min-width: 150px; transition: border-color 0.15s; }
+    .field input:focus, .field select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
 
     /* Component builder */
     .comp-builder { border: 1.5px solid #e8eaf0; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
@@ -51,7 +51,7 @@
 
     /* Manufacturing builder */
     .mfg-builder { border: 1.5px solid #d1fae5; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; background: #f9fffe; }
-    .mfg-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: #065f46; cursor: pointer; margin-bottom: 0; }
+    .mfg-toggle { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: #065f46; cursor: pointer; margin-bottom: 0; font-family: inherit; }
     .mfg-toggle input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: #059669; }
     .mfg-options { margin-top: 14px; }
     .mfg-options.hidden { display: none; }
@@ -59,7 +59,7 @@
     .test-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .test-section { background: #fff; border: 1px solid #e8eaf0; border-radius: 6px; padding: 12px 14px; }
     .test-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #888; margin-bottom: 8px; }
-    .test-row { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px; font-size: 13px; color: #444; margin-bottom: 6px; }
+    .test-row { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px; font-size: 14px; color: #374151; margin-bottom: 6px; }
     .test-row.opt label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
     .test-row.opt input[type=checkbox] { width: 13px; height: 13px; accent-color: #7c3aed; cursor: pointer; flex-shrink: 0; }
     .req-badge { background: #dcfce7; color: #166534; border-radius: 3px; padding: 1px 6px; font-size: 10px; font-weight: 700; }
@@ -67,7 +67,7 @@
     .mfg-note { font-size: 11px; color: #059669; font-style: italic; margin-top: 10px; }
 
     /* Buttons */
-    .btn { padding: 9px 22px; border: none; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .btn { padding: 10px 24px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; }
     .btn-primary { background: #1a1a2e; color: #fff; } .btn-primary:hover { background: #2d2d50; }
     .btn-green { background: #27ae60; color: #fff; } .btn-green:hover { background: #1e8449; }
     .btn-ghost { background: #eee; color: #555; } .btn-ghost:hover { background: #ddd; }
@@ -84,8 +84,8 @@
     .ms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); }
     .ms { background: #fff; padding: 14px 20px; border-right: 1px solid #f1f5f9; }
     .ms:last-child { border-right: none; }
-    .ms-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.6px; margin-bottom: 6px; }
-    .ms-date { font-size: 15px; font-weight: 700; color: #0f172a; letter-spacing: -0.3px; }
+    .ms-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .ms-date { font-size: 17px; font-weight: 700; color: #0f172a; letter-spacing: -0.4px; }
     .ms-note { display: none; }
     .ms { cursor: default; }
     .ms.green { background: #f0fdf4; } .ms.green .ms-date { color: #16a34a; }
