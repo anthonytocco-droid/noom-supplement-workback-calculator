@@ -868,6 +868,13 @@ function buildGantt(skuList) {
         const tickCol = is3pl ? '#d97706' : '#1d4ed8';
         o += `<line x1="${arrX}" y1="${barY-2}" x2="${arrX}" y2="${barY+BAR_H+2}" stroke="${tickCol}" stroke-width="2" opacity="0.7"/>`;
       }
+      // For VQ-bound components: faint "at VQ waiting" bar from arrival to fill/seal start
+      if (!is3pl && r.mfgTrack) {
+        const waitEnd = r.mfgTrack.fillSealStart;
+        const wX = Math.max(arrX, LABEL_W);
+        const wW = Math.max(Math.min(xOf(waitEnd), SVG_W) - wX, 0);
+        if (wW > 2) o += `<rect x="${wX}" y="${barY + Math.round(BAR_H*0.3)}" width="${wW}" height="${Math.round(BAR_H*0.4)}" rx="2" fill="${prodCol}" opacity="0.18"/>`;
+      }
     });
 
     const baseY = curY + (showSkuBand ? SKU_HDR_H : 0) + r.components.length*COMP_H;
@@ -903,7 +910,7 @@ function buildGantt(skuList) {
       const tplBarY = tplRowY + (VQ_H-BAR_H)/2;
       o += `<rect x="0" y="${tplRowY}" width="${LABEL_W}" height="${VQ_H}" fill="#fff"/>`;
       o += `<text x="${LABEL_W-4}" y="${tplRowY+VQ_H/2+4}" font-size="9" fill="#334155" text-anchor="end" font-weight="600">3PL Transit</text>`;
-      o += `<rect x="${xOf(r.shipTo3PL)}" y="${tplBarY}" width="${wOf(r.shipTo3PL,r.threePlReceive)}" height="${BAR_H}" rx="3" fill="${GANTT_C.transit}"/>`;
+      o += `<rect x="${xOf(r.shipTo3PL)}" y="${tplBarY}" width="${wOf(r.shipTo3PL, r.launch)}" height="${BAR_H}" rx="3" fill="${GANTT_C.transit}"/>`;
     } else {
       // No mfg: simple Vitaquest+3PL row
       const vqRowY = baseY;
