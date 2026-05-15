@@ -862,13 +862,11 @@ function buildGantt(skuList) {
         o += `<rect x="${pX}" y="${barY}" width="${pW}" height="${BAR_H}" rx="3" fill="${prodCol}"/>`;
         if (xOf(comp.printReady) >= LABEL_W) o += `<line x1="${pX}" y1="${barY}" x2="${pX}" y2="${barY+BAR_H}" stroke="#fff" stroke-width="1.5"/>`;
       }
-      // Faint "at destination / waiting" extension from arrival to launch
-      const waitX = Math.max(bX(comp.arrives), LABEL_W);
-      const waitW = Math.max(Math.min(xOf(r.launch), SVG_W) - waitX, 0);
-      if (waitW > 2) o += `<rect x="${waitX}" y="${barY + Math.round(BAR_H*0.3)}" width="${waitW}" height="${Math.round(BAR_H*0.4)}" rx="2" fill="${prodCol}" opacity="0.13"/>`;
-      if (is3pl) {
-        const ax = xOf(comp.arrives);
-        if (ax >= LABEL_W) o += `<rect x="${ax-4}" y="${barY}" width="8" height="${BAR_H}" rx="1" fill="#b45309"/>`;
+      // Arrival tick line (clean milestone marker)
+      const arrX = xOf(comp.arrives);
+      if (arrX >= LABEL_W && arrX <= SVG_W) {
+        const tickCol = is3pl ? '#d97706' : '#1d4ed8';
+        o += `<line x1="${arrX}" y1="${barY-2}" x2="${arrX}" y2="${barY+BAR_H+2}" stroke="${tickCol}" stroke-width="2" opacity="0.7"/>`;
       }
     });
 
